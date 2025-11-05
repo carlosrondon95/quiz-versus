@@ -37,73 +37,72 @@
     stop(){ this.loop.stop(); }
 
     update(dt){
-      // input
-      if (Keys.isDown('ArrowRight') || Keys.isDown('KeyD')) this.hero.dx += 1.6;
-      if (Keys.isDown('ArrowLeft')  || Keys.isDown('KeyA')) this.hero.dx -= 1.2;
+  // input movimiento
+  if (Keys.isDown('ArrowRight') || Keys.isDown('KeyD')) this.hero.dx += 1.6;
+  if (Keys.isDown('ArrowLeft')  || Keys.isDown('KeyA')) this.hero.dx -= 1.2;
 
-      // físicas simples
-      this.hero.dx *= 0.9;
-      this.hero.x  += this.hero.dx;
+  // físicas simples
+  this.hero.dx *= 0.9;
+  this.hero.x  += this.hero.dx;
 
-      // cámara
-      const targetCam = this.hero.x - this.W/2;
-      this.camX += (targetCam - this.camX) * 0.07;
+  // cámara suave
+  const targetCam = this.hero.x - this.W/2;
+  this.camX += (targetCam - this.camX) * 0.07;
 
-      // colisión con portal activo
-      const px = this.portalX[this.step];
-      if (Math.abs(this.hero.x - px) < 36) {
-        this.hero.dx = 0;
-        this.stop();
-        const qObj = QUESTIONS[this.step];
+  // portal activo actual (0..7)
+  const px = this.portalX[this.step];
 
-        if (qObj.id === 'form') {
-          formModal(async ({name,email,phone,consent})=>{
-            // Enviar por AJAX
-            try{
-              const payload = new URLSearchParams();
-              payload.append('action','qr_send_lead');
-              payload.append('nonce', qrAjax.nonce);
-              payload.append('name', name);
-              payload.append('email', email);
-              payload.append('phone', phone);
-              payload.append('consent', consent);
-              payload.append('answers', JSON.stringify(this.answers));
-              const r = await fetch(qrAjax.ajax_url, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: payload.toString() });
-              const data = await r.json();
-              this.finish();
-            }catch(e){ alert('Error de red'); this.finish(); }
+  // si estamos cerca del portal activo, mostramos su contenido
+  if (Math.abs(this.hero.x - px) < 36) {
+    this.hero.dx = 0;
+    this.stop();
+
+    const qObj = QUESTIONS[this.step];
+
+    // Si es la estación 8 (formulario), SOLO se abre al llegar ahora
+    if (qObj.id === 'form') {
+      formModal(async ({name,email,phone,consent})=>{
+        try{
+          const payload = new URLSearchParams();
+          payload.append('action','qr_send_lead');
+          payload.append('nonce', qrAjax.nonce);
+          payload.append('name', name);
+          payload.append('email', email);
+          payload.append('phone', phone);
+          payload.append('consent', consent);
+          payload.append('answers', JSON.stringify(this.answers));
+          const r = await fetch(qrAjax.ajax_url, {
+            method:'POST',
+            headers:{'Content-Type':'application/x-www-form-urlencoded'},
+            body: payload.toString()
           });
-        } else {
-          questionModal(qObj, (opt)=>{
-            const choice = { id:qObj.id, q:qObj.q, value: opt };
-            this.answers.push(choice);
-            applyScoring(this.score, choice);
-            this.step++;
-            if (this.hudBadge) this.hudBadge.textContent = `${Math.min(this.step+1,8)} / 8`;
-            this.start();
-            this.hero.dx = 1.8;
-            // si paso 7→ abrir form inmediatamente
-            if (this.step === 7) {
-              setTimeout(()=>{ this.stop(); formModal(async ({name,email,phone,consent})=>{
-                try{
-                  const payload = new URLSearchParams();
-                  payload.append('action','qr_send_lead');
-                  payload.append('nonce', qrAjax.nonce);
-                  payload.append('name', name);
-                  payload.append('email', email);
-                  payload.append('phone', phone);
-                  payload.append('consent', consent);
-                  payload.append('answers', JSON.stringify(this.answers));
-                  const r = await fetch(qrAjax.ajax_url, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: payload.toString() });
-                  const data = await r.json();
-                  this.finish();
-                }catch(e){ alert('Error de red'); this.finish(); }
-              }); }, 150);
-            }
-          });
+          const data = await r.json();
+          this.finish();
+        }catch(e){
+          alert('Error de red');
+          this.finish();
         }
-      }
+      });
+      return;
     }
+
+    // Para estaciones 1..7: pregunta normal
+    questionModal(qObj, (opt)=>{
+      const choice = { id:qObj.id, q:qObj.q, value: opt };
+      this.answers.push(choice);
+      applyScoring(this.score, choice);
+
+      // avanzamos a la siguiente estación
+      this.step++;
+      if (this.hudBadge) this.hudBadge.textContent = `${Math.min(this.step+1,8)} / 8`;
+
+      // reanudamos el juego; NO abrimos el formulario aún, habrá que llegar a la puerta 8
+      this.start();
+      this.hero.dx = 1.8;
+    });
+  }
+}
+
 
     finish(){
       const win = winner(this.score);
