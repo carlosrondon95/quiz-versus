@@ -2,18 +2,11 @@
   const canvas = document.getElementById("qr-canvas");
   const hudBadge = document.querySelector(".qr-hud .qr-badge");
   const stage = document.getElementById("qr-stage");
+  const appRoot = document.getElementById("qr-app");
   const padEl = document.getElementById("qr-pad");
-  if (!canvas || !stage) return;
+  if (!canvas || !stage || !appRoot) return;
 
-  // Color de marca 
-  if (window.qrAjax && qrAjax.brand) {
-    document.documentElement.style.setProperty(
-      "--primary",
-      qrAjax.brand.primary || "#00BCD4"
-    );
-  }
-
-  // Detección robusta de móvil (UA + coarse pointer + no hover)
+  // Detección robusta de móvil
   const isMobile = (function () {
     const ua = (
       navigator.userAgent ||
@@ -32,46 +25,46 @@
     return uaMobile || (coarse && noHover);
   })();
 
-  // Estado del pad (si se usa)
-  const padState = { left: false, right: false };
+  if (isMobile) document.body.classList.add("is-mobile");
+  else document.body.classList.remove("is-mobile");
+
+  // Instancias
   let viewport = null;
   let virtualPad = null;
+  let fsMgr = null;
+  const padState = { left: false, right: false };
 
   if (isMobile) {
-    // MODO MÓVIL: stage móvil, viewport y pad
-    stage.classList.add("qr-stage--mobile");
-
     viewport = new QRViewport(canvas, stage, padEl);
     virtualPad = new VirtualPad({
       onJump: () => {
         if (game) game.queueJump();
       },
     });
+    fsMgr = new QRFS(appRoot, stage, padEl);
 
-    // Sincroniza flags del padState leyendo clases CSS de los botones
+    // Leer estado de botones (clases) para el juego
     const btnL = document.getElementById("qr-pad-left");
     const btnR = document.getElementById("qr-pad-right");
-    function updatePadState() {
+    (function loopPad() {
       padState.left = btnL && btnL.classList.contains("qr-pad__btn--pressed");
       padState.right = btnR && btnR.classList.contains("qr-pad__btn--pressed");
-      requestAnimationFrame(updatePadState);
-    }
-    updatePadState();
+      requestAnimationFrame(loopPad);
+    })();
   } else {
-    // ESCRITORIO: sin viewport ni pad; apariencia original
+    // Escritorio
     stage.classList.remove("qr-stage--mobile");
     if (padEl) {
       padEl.hidden = true;
       padEl.setAttribute("aria-hidden", "true");
     }
-    // Asegura que el canvas no tenga escalados de sesiones previas
     canvas.style.width = "";
     canvas.style.height = "";
     stage.style.height = "";
     stage.style.minHeight = "";
   }
 
-  // Crea el juego (usa padState solo si es móvil)
+  // Juego
   const game = new QRGame(
     canvas,
     hudBadge,
@@ -79,6 +72,11 @@
     isMobile ? padState : { left: false, right: false }
   );
 
-  // Menú de inicio → comenzar juego
-  window.QRUI.startModal(() => game.start());
+  // Menú de inicio: en móvil primero FS (y bloqueo a landscape), luego arrancamos
+  window.QRUI.startModal(async () => {
+    if (isMobile && fsMgr) {
+      await fsMgr.enter(); // aquí se intenta bloquear a landscape
+    }
+    game.start();
+  });
 })();

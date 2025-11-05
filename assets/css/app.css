@@ -1,19 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Press+Start+2P&display=swap");
 
 :root {
-  --primary: #00bcd4; /* se sobreescribe abajo con tu paleta */
-  --ink: #0f172a;
-  --sky1: #bdefff;
-  --sky2: #e8fdff;
+  --brand-dark: #9a794a;
+  --brand-light: #d09e55;
+  --gray-dark: #706f6f;
+  --gray-light: #9d9d9c;
+  --black: #000000;
 
-  /* ===== Paleta corporativa ===== */
-  --brand-dark: #9a794a; /* marrón oscuro */
-  --brand-light: #d09e55; /* marrón claro  */
-  --gray-dark: #706f6f; /* gris oscuro   */
-  --gray-light: #9d9d9c; /* gris claro    */
-  --black: #000000; /* negro         */
-
-  /* Integramos en las variables base del tema */
   --primary: var(--brand-light);
   --ink: var(--gray-dark);
 }
@@ -25,13 +18,15 @@ html,
 body {
   height: 100%;
 }
+
 body {
   margin: 0;
-  background: linear-gradient(var(--sky1), var(--sky2));
   image-rendering: pixelated;
   font-family: "Poppins", system-ui, -apple-system, sans-serif;
   color: var(--ink);
   overflow-x: hidden;
+  /* Fondo azul celeste */
+  background: var(--bg-sky, #cfefff);
 }
 
 #qr-app {
@@ -42,6 +37,22 @@ body {
   align-items: center;
 }
 
+/* ===== Fullscreen ===== */
+#qr-app.qr-app--fs {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #000;
+  padding: max(8px, env(safe-area-inset-top)) 8px
+    calc(8px + env(safe-area-inset-bottom)) 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* HUD */
 .qr-hud {
   display: flex;
   gap: 12px;
@@ -50,7 +61,6 @@ body {
   background: #fff;
   border: 6px solid var(--gray-dark);
   outline: 6px solid #fff;
-  /* contorno en gris corporativo + sombra de profundidad en negro */
   box-shadow: 0 0 0 6px var(--gray-dark), 0 8px 0 var(--black);
   border-radius: 6px;
   padding: 10px 14px;
@@ -66,13 +76,24 @@ body {
   font-size: 11px;
 }
 
-/* Stage: ESCRITORIO por defecto (igual que antes) */
+/* Pistas según dispositivo */
+.qr-hint--mobile {
+  display: none;
+}
+.is-mobile .qr-hint--desktop {
+  display: none;
+}
+.is-mobile .qr-hint--mobile {
+  display: inline;
+}
+
+/* Stage */
 .qr-stage {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff; /* blanco en escritorio */
+  background: #fff;
   border: 8px solid var(--gray-dark);
   outline: 6px solid #fff;
   box-shadow: 0 0 0 6px var(--gray-dark), 0 8px 0 var(--black);
@@ -80,18 +101,16 @@ body {
   overflow: hidden;
   min-height: 200px;
 }
+.qr-stage--mobile {
+  background: #000;
+}
 #qr-canvas {
   display: block;
   image-rendering: pixelated;
   touch-action: none;
 }
 
-/* Versión MÓVIL del stage: activada SOLO con clase JS */
-.qr-stage--mobile {
-  background: #000; /* letterboxing visible en móvil (negro) */
-}
-
-/* Modal retro */
+/* Modal retro (subimos z-index para verse sobre #qr-app en FS) */
 .qr-modal {
   position: fixed;
   inset: 0;
@@ -99,7 +118,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 10006; /* antes 9999: ahora por encima de #qr-app (10000), pad (10002) y X (10003) */
 }
 .qr-card {
   background: #fff;
@@ -133,7 +152,7 @@ body {
   border: 4px solid var(--gray-dark);
   background: #fff;
   cursor: pointer;
-  box-shadow: 0 3px 0 var(--black); /* toque de negro en relieve */
+  box-shadow: 0 3px 0 var(--black);
   border-radius: 8px;
 }
 .qr-opt:hover {
@@ -182,40 +201,7 @@ body {
   box-shadow: 0 2px 0 var(--brand-dark);
 }
 
-/* Inicio / portada */
-.qr-lead {
-  font-size: 15px;
-  line-height: 1.7;
-  margin: 12px 0 14px;
-}
-.qr-startlist {
-  text-align: left;
-  display: inline-block;
-  font-size: 14px;
-  line-height: 1.6;
-  padding-left: 18px;
-  margin: 0 0 14px;
-}
-.qr-startlist li {
-  margin: 4px 0;
-}
-.qr-startkbd {
-  display: inline-block;
-  border: 3px solid var(--gray-dark);
-  border-radius: 6px;
-  padding: 2px 6px;
-  box-shadow: 0 2px 0 var(--black);
-  background: #fff;
-  margin: 0 2px;
-  font-weight: 600;
-}
-.qr-start-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-}
-
-/* Final / resultado (alineado con el menú) */
+/* Final / resultado */
 .qr-end .qr-title {
   font-family: "Press Start 2P", monospace;
   font-size: 16px;
@@ -265,8 +251,8 @@ body {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: 9998;
+  bottom: 0; /* valor base; ajustamos más abajo por estado/orientación */
+  z-index: 10002; /* por encima de #qr-app (10000) */
   padding: 8px;
   pointer-events: none;
   color: #fff;
@@ -274,19 +260,23 @@ body {
 .qr-pad__left,
 .qr-pad__right {
   display: flex;
-  gap: 10px;
-}
+  gap: 8px;
+} /* gap más pequeño */
 .qr-pad__btn {
   pointer-events: auto;
-  min-width: 64px;
-  min-height: 64px;
+  min-width: clamp(
+    44px,
+    10vw,
+    64px
+  ); /* antes 56–80px → más pequeño y adaptativo */
+  min-height: clamp(44px, 10vw, 64px);
   border-radius: 12px;
   border: 4px solid var(--gray-dark);
   background: rgba(255, 255, 255, 0.9);
   color: #111;
-  font-size: 22px;
+  font-size: clamp(16px, 3.6vw, 22px); /* texto proporcional */
   font-weight: 700;
-  box-shadow: 0 4px 0 var(--black); /* sombra en negro para mejor contraste */
+  box-shadow: 0 4px 0 var(--black);
   touch-action: none;
 }
 .qr-pad__btn:active,
@@ -299,25 +289,27 @@ body {
   color: #fff;
 }
 
+.qr-pad--landscape {
+  background: transparent;
+}
 .qr-pad--portrait {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(0, 0, 0, 0.9); /* barra inferior negra en retrato */
+  background: rgba(0, 0, 0, 0.95);
   padding-bottom: calc(8px + env(safe-area-inset-bottom));
 }
-.qr-pad--landscape {
-  background: transparent;
-}
+
+/* Posición en landscape: un poco más arriba */
 .qr-pad--landscape .qr-pad__left {
   position: fixed;
-  left: 10px;
-  bottom: calc(10px + env(safe-area-inset-bottom));
+  left: 16px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
 }
 .qr-pad--landscape .qr-pad__right {
   position: fixed;
-  right: 10px;
-  bottom: calc(10px + env(safe-area-inset-bottom));
+  right: 16px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
 }
 .qr-pad--landscape .qr-pad__btn {
   background: rgba(0, 0, 0, 0.5);
@@ -326,7 +318,110 @@ body {
   box-shadow: none;
 }
 
-/* Responsive */
+/* ===== Botón salir (✕) ===== */
+.qr-exit {
+  position: fixed;
+  z-index: 10003; /* por encima del pad */
+  top: calc(env(safe-area-inset-top) + 8px);
+  left: 8px;
+  width: 44px;
+  height: 44px;
+  display: none; /* controlado por estado */
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 4px solid var(--gray-dark);
+  font-weight: 800;
+  font-size: 20px;
+  color: #fff;
+  box-shadow: 0 4px 0 var(--black);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+.qr-exit--portrait {
+  background: #000;
+}
+.qr-exit--landscape {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* ===== Overlay "Gira el móvil" ===== */
+.qr-rotate {
+  position: fixed;
+  inset: 0;
+  z-index: 10004;
+  display: none; /* visible solo en móvil + FS + portrait */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  text-align: center;
+  padding: 24px;
+}
+.qr-rotate__card {
+  background: rgba(0, 0, 0, 0.6);
+  border: 3px solid #fff;
+  border-radius: 12px;
+  padding: 16px 18px;
+  max-width: 520px;
+}
+.qr-rotate__title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.qr-rotate__text {
+  opacity: 0.95;
+}
+
+/* ===== Visibilidad por estado ===== */
+/* Por defecto, oculto pad y X */
+#qr-exit {
+  display: none;
+}
+.is-mobile #qr-app .qr-pad {
+  display: none;
+}
+
+/* En móvil + fullscreen, mostrar pad y X */
+.is-mobile #qr-app.qr-app--fs .qr-pad {
+  display: block;
+}
+.is-mobile #qr-app.qr-app--fs .qr-exit {
+  display: flex;
+}
+
+/* En móvil + fullscreen + portrait => ocultar pad y stage y mostrar overlay de giro */
+.is-mobile #qr-app.qr-app--fs.is-portrait .qr-pad {
+  display: none;
+}
+.is-mobile #qr-app.qr-app--fs.is-portrait #qr-rotate {
+  display: flex;
+}
+.is-mobile #qr-app.qr-app--fs.is-portrait #qr-stage {
+  display: none;
+} /* <-- recorta el fondo estirado detrás del diálogo */
+
+/* Sube un poco el pad en portrait también (separa del borde inferior) */
+.is-mobile #qr-app.qr-app--fs .qr-pad.qr-pad--portrait {
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+}
+
+/* ===== Ajustes tipográficos en FS ===== */
+#qr-app.qr-app--fs .qr-card {
+  max-width: min(640px, 92vw);
+}
+#qr-app.qr-app--fs .qr-title {
+  font-size: clamp(14px, 2.8vw, 18px);
+}
+#qr-app.qr-app--fs .qr-q {
+  font-size: clamp(14px, 2.6vw, 18px);
+}
+#qr-app.qr-app--fs .qr-opt {
+  font-size: clamp(13px, 2.4vw, 16px);
+  padding: clamp(10px, 2.2vw, 14px) clamp(12px, 2.4vw, 16px);
+}
+
+/* Responsive escritorio */
 @media (max-width: 768px) {
   .qr-hud {
     font-size: 11px;
