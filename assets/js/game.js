@@ -13,7 +13,7 @@
     black: "#000000",
   };
 
-  // Utilidades
+  // Utils
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const rand = (min, max) => Math.random() * (max - min) + min;
 
@@ -27,17 +27,17 @@
       this.assets = assets || {}; // { hero:{...}, fondo, puerta, copa, obstaculo, deco:{...} }
       this.pad = pad || { left: false, right: false, onJump: () => {} };
 
-      // Tamaño lógico de render (no tocar)
+      // Tamaño lógico
       this.W = this.cv.width;
       this.H = this.cv.height;
 
       // Suelo
       this.groundY = this.H - 64; // referencia visual
-      this.footY = this.groundY - 8; // cota donde apoya el héroe y la base de puertas
+      this.footY = this.groundY - 8; // cota donde apoya héroe/puertas
 
-      // Estaciones / recorrido (↑ más separación)
+      // Estaciones / recorrido
       this.stations = 8;
-      this.spacing = 520; // antes 360 → más recorrido
+      this.spacing = 520; // recorrido entre puertas
       this.startX = 60;
       this.portalX = Array.from(
         { length: this.stations },
@@ -69,20 +69,20 @@
         vy: 0,
       };
 
-      // Anim
+      // Animación
       this.anim = { facing: 1, walkTimer: 0, frameDur: 0.12 };
 
       // Cámara
       this.camX = 0;
 
-      // Obstáculos
+      // Obstáculos (incluye escalón)
       this.obstacles = this.createObstacles();
 
-      // Decorativos (screen-space)
-      this.flyers = [];
+      // “Flyers” del cielo (MUNDO, no pantalla)
+      this.flyers = []; // [{type,img,x,y,dir, ...}] en coordenadas de mundo
       this.flyTimer = 0;
 
-      // Bucle
+      // Loop
       this.loop = createLoop(this.update.bind(this), this.render.bind(this));
 
       // Input salto
@@ -133,7 +133,6 @@
       const img = this.assets.obstaculo;
       if (!img) return list;
 
-      // Dimensiones base (escaladas por altura “objetivo”)
       const baseH = 28; // bloque suelo
       const stepH = 26; // bloque elevado
       const scaleBase = baseH / img.height;
@@ -142,10 +141,7 @@
       const stepW = Math.max(16, Math.round(img.width * scaleStep));
 
       for (let i = 0; i < this.stations - 1; i++) {
-        // Saltamos el primer tramo a veces para no molestar al inicio
         if (i === 0 && Math.random() < 0.4) continue;
-
-        // 70% de prob de poner “algo” en el tramo
         if (Math.random() < 0.7) {
           const x1 = this.portalX[i],
             x2 = this.portalX[i + 1];
@@ -153,33 +149,20 @@
           const rightSafe = x2 - 80;
           const span = Math.max(120, rightSafe - leftSafe);
 
-          // 50%: single bajo | 50%: combo escalón (suelo + elevado a la derecha)
           if (Math.random() < 0.5) {
             const cx = leftSafe + rand(span * 0.25, span * 0.75);
-            list.push({
-              x: cx,
-              w: baseW,
-              h: baseH,
-              yBottom: this.footY, // en el suelo
-            });
+            list.push({ x: cx, w: baseW, h: baseH, yBottom: this.footY });
           } else {
-            // Bloque suelo
             const cx = leftSafe + rand(span * 0.2, span * 0.55);
-            list.push({
-              x: cx,
-              w: baseW,
-              h: baseH,
-              yBottom: this.footY,
-            });
-            // Bloque elevado a la derecha (subir o saltar)
+            list.push({ x: cx, w: baseW, h: baseH, yBottom: this.footY });
             const gap = 16 + rand(0, 12);
-            const raise = 22 + rand(0, 10); // altura elevación
+            const raise = 22 + rand(0, 10);
             const cx2 = cx + baseW + gap;
             list.push({
               x: cx2,
               w: stepW,
               h: stepH,
-              yBottom: this.footY - raise, // elevado
+              yBottom: this.footY - raise,
             });
           }
         }
@@ -206,17 +189,15 @@
         const overlapY = topH < bottomO && bottomH > topO;
         if (!overlapX || !overlapY) continue;
 
-        // Aterrizaje desde arriba en la “plataforma”
         const wasAbove = prevY <= topO && hero.vy >= 0;
         if (wasAbove && rightH > leftO && leftH < rightO) {
-          hero.y = topO; // pies en la plataforma
+          hero.y = topO;
           hero.vy = 0;
           this.jumpCount = 0;
           this.coyoteTimer = this.coyoteTime;
           continue;
         }
 
-        // Choque lateral: empujar fuera con mínima traslación
         const penLeft = rightH - leftO;
         const penRight = rightO - leftH;
         if (penLeft < penRight) {
@@ -229,58 +210,63 @@
       }
     }
 
-    /* ============ Decorativos (cielo) ============ */
+    /* ============ Decorativos (cielo, en MUNDO) ============ */
     hasActive(type) {
       return this.flyers.some((f) => f.type === type);
     }
 
     pickFlyerType() {
-      // Pesos base (pájaros algo menos frecuentes)
-      const weights = [];
-      const add = (type, w) => weights.push({ type, w });
+      // Unicidad para cometa/nave/marciano
+      const pool = [];
+      const add = (type, w) => pool.push({ type, w });
 
-      // Unicidad: cometa/nave/marciano máx 1
-      if (!this.hasActive("cometa")) add("cometa", 0.2);
-      if (!this.hasActive("nave")) add("nave", 0.25);
-      if (!this.hasActive("marciano")) add("marciano", 0.25);
+      if (!this.hasActive("cometa")) add("cometa", 0.22);
+      if (!this.hasActive("nave")) add("nave", 0.24);
+      if (!this.hasActive("marciano")) add("marciano", 0.24);
 
-      // Pájaros (pueden repetirse, pero “un poco” menos)
+      // Pájaros menos frecuentes
       add("pajaro1", 0.15);
       add("pajaro2", 0.15);
 
-      const total = weights.reduce((s, it) => s + it.w, 0);
+      const total = pool.reduce((s, it) => s + it.w, 0);
       if (total <= 0) return null;
-
       let r = Math.random() * total;
-      for (const it of weights) {
+      for (const it of pool) {
         if ((r -= it.w) <= 0) return it.type;
       }
-      return weights[weights.length - 1].type;
+      return pool[pool.length - 1].type;
     }
 
     spawnFlyer() {
       if (!this.assets.deco) return;
       const type = this.pickFlyerType();
       if (!type) {
-        this.flyTimer = rand(1.6, 2.8);
+        this.flyTimer = rand(1.8, 3.0);
         return;
       }
 
       const img = this.assets.deco[type];
       if (!img) {
-        this.flyTimer = rand(1.6, 2.8);
+        this.flyTimer = rand(1.8, 3.0);
         return;
       }
 
-      // Dirección y cinemática por tipo
+      // Bordes de spawn en MUNDO (depende de cámara actual)
+      const leftEdge = this.camX;
+      const rightEdge = this.camX + this.W;
+
+      const scaleByType = (t) =>
+        t === "pajaro1" || t === "pajaro2" ? 0.85 : 1.0;
+
       if (type === "cometa") {
-        // Súper rápido, diagonal descendente
+        // Muy rápido, diagonal descendente
         const dir = Math.random() < 0.5 ? 1 : -1;
         const speed = rand(280, 420);
         const vx = speed * (dir === 1 ? 1 : -1);
-        const vy = speed * rand(0.45, 0.75); // caída
-        const y0 = rand(-30, 40); // entra por arriba
-        const x0 = dir === 1 ? -img.width - 30 : this.W + 30;
+        const vy = speed * rand(0.45, 0.75);
+        const y0 = rand(-30, 40);
+        const x0 = dir === 1 ? leftEdge - 120 : rightEdge + 120;
+
         this.flyers.push({
           type,
           img,
@@ -288,39 +274,26 @@
           y: y0,
           vx,
           vy,
-          // sin bobbing
+          s: scaleByType(type),
+          flipX: false,
         });
-        this.flyTimer = rand(2.2, 3.8); // no muy frecuentes
+        this.flyTimer = rand(2.2, 3.8);
         return;
       }
 
-      if (type === "marciano" || type === "nave") {
-        // Más rápidos que pájaros, con ligera ondulación
-        const dir = Math.random() < 0.5 ? 1 : -1;
-        const speed = rand(140, 220) * (dir === 1 ? 1 : -1);
-        const y = rand(this.H * 0.18, this.H * 0.45);
-        const x = dir === 1 ? -img.width - 20 : this.W + 20;
-        this.flyers.push({
-          type,
-          img,
-          x,
-          y,
-          baseY: y,
-          dir,
-          t: 0,
-          amp: rand(3, 7),
-          freq: rand(0.9, 1.8),
-          speed,
-        });
-        this.flyTimer = rand(1.4, 2.4);
-        return;
-      }
-
-      // Pájaros: algo más lentos y menos frecuentes
+      // Marciano / nave / pájaros (con bobbing)
       const dir = Math.random() < 0.5 ? 1 : -1;
-      const speed = rand(35, 60) * (dir === 1 ? 1 : -1);
-      const y = rand(20, this.H * 0.4);
-      const x = dir === 1 ? -img.width - 20 : this.W + 20;
+      const fastMin = type === "marciano" || type === "nave" ? 140 : 35;
+      const fastMax = type === "marciano" || type === "nave" ? 220 : 60;
+      const speed = rand(fastMin, fastMax) * (dir === 1 ? 1 : -1);
+      const y = rand(this.H * 0.18, this.H * 0.45);
+      const x = dir === 1 ? leftEdge - 120 : rightEdge + 120;
+
+      let flipX = false;
+      if (type === "pajaro1" && dir === -1) flipX = true;
+      if (type === "nave" && dir === -1) flipX = true;
+      if (type === "pajaro2" && dir === 1) flipX = true;
+
       this.flyers.push({
         type,
         img,
@@ -332,13 +305,17 @@
         amp: rand(4, 10),
         freq: rand(0.8, 1.6),
         speed,
+        s: scaleByType(type),
+        flipX,
       });
 
-      // Aumenta un poco el tiempo al siguiente spawn para reducir densidad de pájaros
-      this.flyTimer = rand(1.8, 3.2);
+      this.flyTimer =
+        type === "marciano" || type === "nave"
+          ? rand(1.4, 2.4)
+          : rand(1.8, 3.2);
     }
 
-    /* ============ Update loop ============ */
+    /* ============ Update ============ */
     update(dt) {
       const goRight =
         Keys.isDown("ArrowRight") || Keys.isDown("KeyD") || !!this.pad.right;
@@ -348,19 +325,17 @@
       const prevX = this.hero.x;
       const prevY = this.hero.y;
 
-      // Aceleración horizontal
+      // Movimiento horizontal
       if (goRight) this.hero.dx += 0.8;
       if (goLeft) this.hero.dx -= 0.7;
 
-      // Rozamiento
       this.hero.dx *= 0.9;
       const MAX_SPEED = 7;
       this.hero.dx = clamp(this.hero.dx, -MAX_SPEED, MAX_SPEED);
 
-      // Avance horizontal
       this.hero.x += this.hero.dx;
 
-      // Intento de salto buffered
+      // Salto con buffer
       if (this.jumpBufferT > 0) {
         if (this.tryJump()) this.jumpBufferT = 0;
       }
@@ -369,7 +344,7 @@
       this.hero.vy += this.gravity * dt;
       this.hero.y += this.hero.vy * dt;
 
-      // Colisiones con obstáculos (antes del suelo general)
+      // Colisiones obstáculos
       this.resolveObstacles(prevX, prevY);
 
       // Suelo general
@@ -388,10 +363,9 @@
       const targetCam = this.hero.x - this.W / 2;
       this.camX += (targetCam - this.camX) * 0.07;
 
-      // Animación facing y caminar
+      // Animación
       if (goRight && !goLeft) this.anim.facing = 1;
       else if (goLeft && !goRight) this.anim.facing = -1;
-
       const movingOnGround = Math.abs(this.hero.dx) > 0.35 && this.onGround();
       this.anim.walkTimer = movingOnGround ? this.anim.walkTimer + dt : 0;
 
@@ -402,7 +376,6 @@
         this.stop();
 
         const qObj = QUESTIONS[this.step];
-
         if (qObj.id === "form") {
           formModal(async ({ name, email, phone, consent }) => {
             try {
@@ -466,31 +439,40 @@
         });
       }
 
-      // ===== Decorativos: spawn & update =====
+      // ===== Flyers: spawn & update (MUNDO) =====
       this.flyTimer -= dt;
       if (this.flyTimer <= 0) this.spawnFlyer();
+
+      const leftEdge = this.camX;
+      const rightEdge = this.camX + this.W;
 
       for (let i = this.flyers.length - 1; i >= 0; i--) {
         const f = this.flyers[i];
 
         if (f.vx !== undefined) {
-          // Cometa: movimiento rectilíneo
+          // Cometa (vx, vy)
           f.x += f.vx * dt;
           f.y += f.vy * dt;
+          // Offscreen (márgenes)
+          if (
+            f.y > this.H + 80 ||
+            f.x < leftEdge - 160 ||
+            f.x > rightEdge + 160
+          ) {
+            this.flyers.splice(i, 1);
+          }
         } else {
-          // Otros: desplazamiento horizontal + bobbing
+          // Otros (bobbing)
           f.t += dt;
           f.x += f.speed * dt;
           f.y = f.baseY + Math.sin(f.t * f.freq) * f.amp;
-        }
 
-        // Salida de pantalla: limpiar
-        if (f.type === "cometa") {
-          if (f.y > this.H + 60 || f.x < -60 || f.x > this.W + 60)
+          if (
+            (f.dir === 1 && f.x > rightEdge + 120) ||
+            (f.dir === -1 && f.x < leftEdge - 120)
+          ) {
             this.flyers.splice(i, 1);
-        } else {
-          if (f.dir === 1 && f.x > this.W + 60) this.flyers.splice(i, 1);
-          else if (f.dir === -1 && f.x < -60) this.flyers.splice(i, 1);
+          }
         }
       }
     }
@@ -523,14 +505,15 @@
         H = this.H;
       const yBottom = this.footY;
 
-      // Fondo con parallax
+      // Fondo: parallax = 1 (bloqueado al mundo ⇒ el “suelo” del fondo se alinea con puertas)
       if (this.assets.fondo) {
         const bg = this.assets.fondo;
         const iw = bg.width,
           ih = bg.height;
         const scale = H / ih;
         const drawW = Math.ceil(iw * scale);
-        const offset = -Math.floor(this.camX * 0.4) % drawW;
+        const factor = 1.0; // <-- importante: bloquea el fondo al mundo
+        const offset = -Math.floor(this.camX * factor) % drawW;
         for (let x = offset - drawW; x < W + drawW; x += drawW) {
           ctx.drawImage(bg, x, 0, drawW, H);
         }
@@ -542,23 +525,36 @@
         ctx.fillRect(0, 0, W, H);
       }
 
-      // Decorativos screen-space
-      if (this.flyers.length) {
-        ctx.save();
-        for (const f of this.flyers) {
-          if (!f.img) continue;
-          ctx.drawImage(f.img, Math.round(f.x), Math.round(f.y));
-        }
-        ctx.restore();
-      }
-
       // Mundo
       ctx.save();
       ctx.translate(-this.camX, 0);
 
-      // Puertas 1..7 y trofeo en 8 (más grande)
+      // Flyers (MUNDO) antes que puertas/hero
+      if (this.flyers.length) {
+        for (const f of this.flyers) {
+          const img = f.img;
+          if (!img) continue;
+          const s = f.s || 1;
+          const dw = Math.max(1, Math.round(img.width * s));
+          const dh = Math.max(1, Math.round(img.height * s));
+          const x = Math.round(f.x);
+          const y = Math.round(f.y);
+
+          if (f.flipX) {
+            ctx.save();
+            ctx.translate(x + dw, y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, 0, 0, dw, dh);
+            ctx.restore();
+          } else {
+            ctx.drawImage(img, x, y, dw, dh);
+          }
+        }
+      }
+
+      // Puertas 1..7 y trofeo 8 (más grande)
       const DOOR_H = 80;
-      const TROPHY_H = 120; // ↑ tamaño del trofeo
+      const TROPHY_H = 120;
       for (let i = 0; i < this.stations; i++) {
         const x = this.portalX[i];
         const isLast = i === this.stations - 1;
@@ -579,7 +575,6 @@
           const h = Math.round(img.height * scale);
           const yTop = yBottom - h;
 
-          // Gris para puertas inactivas (futuras)
           const inactive = !isLast && i > this.step;
           if (inactive && "filter" in ctx) {
             ctx.save();
@@ -590,7 +585,6 @@
             ctx.drawImage(img, x - w / 2, yTop, w, h);
           }
 
-          // Número (solo puertas)
           if (!isLast) {
             ctx.fillStyle = BRAND.gDark;
             ctx.font = '16px "Press Start 2P", monospace';
@@ -598,7 +592,6 @@
             ctx.fillText(String(i + 1), x, yTop - 8);
           }
         } else {
-          // Fallback minimalista
           const h = isLast ? TROPHY_H : DOOR_H;
           const w = isLast ? 56 : 48;
           const yTop = yBottom - h;
@@ -660,15 +653,14 @@
       // Héroe
       ctx.save();
       ctx.translate(this.hero.x, this.hero.y);
-
-      const hasHeroSprites =
+      const hasHero =
         this.assets.hero &&
         this.assets.hero.idle &&
         this.assets.hero.stepR &&
         this.assets.hero.stepL &&
         this.assets.hero.jump;
 
-      if (hasHeroSprites) {
+      if (hasHero) {
         let sprite = this.assets.hero.idle;
         if (!this.onGround()) {
           sprite = this.assets.hero.jump;
@@ -694,8 +686,8 @@
         ctx.fillStyle = "#fff";
         ctx.fillRect(-10, -this.hero.h + 6, 20, 12);
       }
-
       ctx.restore(); // héroe
+
       ctx.restore(); // mundo
     }
   }

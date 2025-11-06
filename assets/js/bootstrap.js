@@ -1,3 +1,4 @@
+// assets/js/bootstrap.js
 (function () {
   const canvas = document.getElementById("qr-canvas");
   const hudBadge = document.querySelector(".qr-hud .qr-badge");
@@ -86,14 +87,37 @@
   if (isMobile) document.body.classList.add("is-mobile");
   else document.body.classList.remove("is-mobile");
 
+  // ===== “Modo ancho” en ESCRITORIO (centrado y un poco más pequeño) =====
+  function applyDesktopWide() {
+    const vw = Math.max(
+      document.documentElement.clientWidth,
+      window.innerWidth || 0
+    );
+    // Un pelín más pequeño y centrado: 84vw (min 1200, max 1600)
+    const targetW = Math.round(Math.min(Math.max(vw * 0.84, 1200), 1600));
+    const targetH = Math.round(targetW / 3); // relación 3:1
+
+    // El marco (stage) define el tamaño visible y se centra
+    stage.style.width = targetW + "px";
+    stage.style.height = targetH + "px";
+    stage.style.minWidth = ""; // sin mínimos agresivos
+    stage.style.minHeight = "";
+    stage.style.maxWidth = "100%";
+    stage.style.margin = "0 auto"; // centrado
+
+    // El canvas llena el stage
+    canvas.style.width = "100%";
+    canvas.style.height = targetH + "px";
+
+    // Marca para CSS (sin transforms)
+    appRoot.classList.add("qr-wide");
+  }
+
   let viewport = null,
     virtualPad = null,
     fsMgr = null;
   const padState = { left: false, right: false };
 
-  // (Escritorio: dejamos tamaño al CSS/JS que ya tengas. Si quieres, luego reajustamos.)
-
-  // ===== Flujo: start -> (FS si móvil) -> selectHero -> precarga -> crear juego -> start =====
   window.QRUI.startModal(async () => {
     if (isMobile) {
       viewport = new QRViewport(canvas, stage, padEl);
@@ -114,11 +138,15 @@
         requestAnimationFrame(loopPad);
       })();
     } else {
+      // Escritorio: aplicar modo ancho centrado
       stage.classList.remove("qr-stage--mobile");
       if (padEl) {
         padEl.hidden = true;
         padEl.setAttribute("aria-hidden", "true");
       }
+
+      applyDesktopWide();
+      window.addEventListener("resize", applyDesktopWide);
     }
 
     // Selección de personaje

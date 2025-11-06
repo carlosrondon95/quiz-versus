@@ -459,20 +459,25 @@ body {
   box-shadow: 0 3px 0 #000, 0 0 0 2px rgba(211, 47, 47, 0.15) inset;
 }
 
-/* ===== Escritorio: ampliar un poco el marco del juego ===== */
+/* ===== Modo ancho (solo escritorio) ===== */
 @media (min-width: 1024px) {
-  /* Aumenta el tamaño visual del canvas ~25–30% sin “pasarnos” */
-  #qr-canvas {
-    /* Mantiene proporción 3:1 (960x320), pero más grande */
-    aspect-ratio: 3 / 1;
-    width: clamp(1100px, 78vw, 1280px);
-    height: auto; /* se calcula por aspect-ratio */
+  /* Contenedor sin traducciones ni 100vw: evitamos desalinear con el tema */
+  #qr-app.qr-wide {
+    max-width: 100vw;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
-  /* El contenedor acompaña la altura del canvas */
+  /* Centrado real del marco del juego */
   #qr-stage.qr-stage {
-    /* El alto del stage crecerá al alto del canvas; no necesitamos calc() aquí */
-    /* Aseguramos que el stage nunca se quede pequeño */
-    min-height: calc((1100px / 3));
+    margin: 0 auto; /* centra */
+    max-width: none !important; /* sin límite del tema */
+  }
+
+  /* El canvas se ajusta al ancho que marque JS vía el stage */
+  #qr-canvas {
+    width: 100% !important; /* llenar el stage */
+    height: auto; /* respetar proporción */
+    aspect-ratio: 3 / 1;
   }
 }
