@@ -7,13 +7,22 @@
   const padEl = document.getElementById("qr-pad");
   if (!canvas || !stage || !appRoot) return;
 
-  // URL base desde PHP
+  // Resolver BASE del plugin de forma robusta
+  function detectBaseFromScript() {
+    const scripts = document.getElementsByTagName("script");
+    for (let i = 0; i < scripts.length; i++) {
+      const s = scripts[i].src || "";
+      const idx = s.indexOf("/assets/js/bootstrap.js");
+      if (idx !== -1) return s.slice(0, idx + 1); // incluye / al final
+    }
+    return "/";
+  }
   const BASE =
     window.qrAjax && qrAjax.base_url
       ? qrAjax.base_url.endsWith("/")
         ? qrAjax.base_url
         : qrAjax.base_url + "/"
-      : "/";
+      : detectBaseFromScript();
 
   // ===== Helpers de carga =====
   function loadImage(src) {
@@ -87,29 +96,25 @@
   if (isMobile) document.body.classList.add("is-mobile");
   else document.body.classList.remove("is-mobile");
 
-  // ===== “Modo ancho” en ESCRITORIO (centrado y un poco más pequeño) =====
+  // ===== “Modo ancho” en ESCRITORIO (centrado y tamaño contenido) =====
   function applyDesktopWide() {
     const vw = Math.max(
       document.documentElement.clientWidth,
       window.innerWidth || 0
     );
-    // Un pelín más pequeño y centrado: 84vw (min 1200, max 1600)
     const targetW = Math.round(Math.min(Math.max(vw * 0.84, 1200), 1600));
     const targetH = Math.round(targetW / 3); // relación 3:1
 
-    // El marco (stage) define el tamaño visible y se centra
     stage.style.width = targetW + "px";
     stage.style.height = targetH + "px";
-    stage.style.minWidth = ""; // sin mínimos agresivos
+    stage.style.minWidth = "";
     stage.style.minHeight = "";
     stage.style.maxWidth = "100%";
     stage.style.margin = "0 auto"; // centrado
 
-    // El canvas llena el stage
     canvas.style.width = "100%";
     canvas.style.height = targetH + "px";
 
-    // Marca para CSS (sin transforms)
     appRoot.classList.add("qr-wide");
   }
 
@@ -138,19 +143,20 @@
         requestAnimationFrame(loopPad);
       })();
     } else {
-      // Escritorio: aplicar modo ancho centrado
       stage.classList.remove("qr-stage--mobile");
       if (padEl) {
         padEl.hidden = true;
         padEl.setAttribute("aria-hidden", "true");
       }
-
       applyDesktopWide();
       window.addEventListener("resize", applyDesktopWide);
     }
 
-    // Selección de personaje
-    QRUI.selectHeroModal(async (gender) => {
+    // Selección de personaje con imágenes (izq = hombre, der = mujer)
+    const malePreview = `${BASE}assets/img/hombre/hombre.png`;
+    const femalePreview = `${BASE}assets/img/mujer/mujer.png`;
+
+    QRUI.selectHeroModal(malePreview, femalePreview, async (gender) => {
       try {
         const [heroSprites, fondo, puerta, copa, obstaculo, deco] =
           await Promise.all([

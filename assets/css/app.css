@@ -110,7 +110,7 @@ body {
   touch-action: none;
 }
 
-/* Modal retro */
+/* ===== Modal retro ===== */
 .qr-modal {
   position: fixed;
   inset: 0;
@@ -201,7 +201,7 @@ body {
   box-shadow: 0 2px 0 var(--brand-dark);
 }
 
-/* Final / resultado */
+/* ===== Final / resultado ===== */
 .qr-end .qr-title {
   font-family: "Press Start 2P", monospace;
   font-size: 16px;
@@ -417,7 +417,7 @@ body {
   padding: clamp(10px, 2.2vw, 14px) clamp(12px, 2.4vw, 16px);
 }
 
-/* Responsive escritorio */
+/* ===== Responsive móvil (detalles HUD) ===== */
 @media (max-width: 768px) {
   .qr-hud {
     font-size: 11px;
@@ -447,37 +447,181 @@ body {
 
 /* === Errores de validación inline del formulario === */
 .qr-error {
-  color: #d32f2f; /* rojo legible */
-  font-size: 12px; /* discreto */
+  color: #d32f2f;
+  font-size: 12px;
   line-height: 1.3;
-  min-height: 14px; /* reserva un pequeño hueco, sin desbordar */
+  min-height: 14px;
   margin-top: 4px;
 }
-
 .qr-input.is-invalid {
   border-color: #d32f2f;
   box-shadow: 0 3px 0 #000, 0 0 0 2px rgba(211, 47, 47, 0.15) inset;
 }
 
+/* ===== Ventanas con altura fija (Inicio y Formulario) ===== */
+.qr-card--start,
+.qr-card--form {
+  width: 640px;
+  height: 420px; /* escritorio */
+  max-width: 90vw;
+  max-height: 90vh; /* seguridad en pantallas pequeñas */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Móvil vertical: más alto */
+@media (max-width: 768px) and (orientation: portrait) {
+  .qr-card--start,
+  .qr-card--form {
+    width: 90vw;
+    height: 500px; /* fijo en vertical */
+  }
+}
+
+/* Móvil horizontal: más bajo y compacto, sin que se corte */
+@media (max-width: 768px) and (orientation: landscape) {
+  .qr-card--start,
+  .qr-card--form {
+    width: 96vw;
+    height: 340px; /* fijo en horizontal */
+    overflow: hidden;
+    padding: 12px 14px; /* compacto */
+  }
+  .qr-card--start .qr-title,
+  .qr-card--form .qr-title {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .qr-startlist li {
+    margin: 4px 0;
+  }
+  .qr-card--form .qr-row {
+    margin: 6px 0;
+  }
+  .qr-card--form .qr-input {
+    padding: 10px;
+    font-size: 13px;
+  }
+  .qr-card--start .qr-btn,
+  .qr-card--form .qr-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* ===== Selección de personaje: compacto ===== */
+.qr-card--select {
+  width: 560px; /* antes 640px */
+  height: 360px; /* antes 420px */
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column; /* título arriba + grid debajo */
+  gap: 8px;
+  align-items: stretch;
+  justify-content: center;
+  padding: 12px 14px; /* menos marco */
+}
+.qr-select {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px; /* menos separación entre columnas */
+  width: 100%;
+}
+.qr-select__item {
+  border: 4px solid var(--gray-dark);
+  background: #fff;
+  border-radius: 8px; /* más ceñido */
+  outline: 4px solid #fff; /* antes 6px */
+  box-shadow: 0 0 0 6px var(--gray-dark), 0 8px 0 var(--black);
+  cursor: pointer;
+  padding: 4px; /* borde interior mínimo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qr-select__item:hover,
+.qr-select__item:focus {
+  border-color: var(--brand-dark);
+  background: #fdf8f1;
+}
+.qr-select__imgwrap {
+  width: 100%;
+  aspect-ratio: 1 / 1; /* cuadro perfecto */
+  display: grid;
+  place-items: center;
+  padding: 2px; /* casi pegado al borde */
+}
+.qr-select__img {
+  image-rendering: pixelated;
+  max-width: 96%;
+  max-height: 96%;
+  width: auto;
+  height: auto;
+}
+
+/* Responsive selector */
+@media (max-width: 768px) and (orientation: portrait) {
+  .qr-card--select {
+    width: 90vw;
+    height: 420px;
+    padding: 10px 12px;
+  }
+  .qr-select {
+    gap: 8px;
+  }
+  .qr-select__item {
+    padding: 4px;
+    outline-width: 4px;
+  }
+  .qr-select__imgwrap {
+    padding: 2px;
+  }
+  .qr-select__img {
+    max-width: 97%;
+    max-height: 97%;
+  }
+}
+@media (max-width: 768px) and (orientation: landscape) {
+  .qr-card--select {
+    width: 96vw;
+    height: 300px;
+    padding: 10px 12px;
+  }
+  .qr-select {
+    gap: 8px;
+  }
+  .qr-select__item {
+    padding: 3px;
+    outline-width: 4px;
+  }
+  .qr-select__imgwrap {
+    padding: 2px;
+  }
+  .qr-select__img {
+    max-width: 98%;
+    max-height: 98%;
+  }
+}
+
 /* ===== Modo ancho (solo escritorio) ===== */
 @media (min-width: 1024px) {
-  /* Contenedor sin traducciones ni 100vw: evitamos desalinear con el tema */
+  /* Contenedor amplio y centrado */
   #qr-app.qr-wide {
     max-width: 100vw;
     padding-left: 16px;
     padding-right: 16px;
   }
-
   /* Centrado real del marco del juego */
   #qr-stage.qr-stage {
-    margin: 0 auto; /* centra */
-    max-width: none !important; /* sin límite del tema */
+    margin: 0 auto;
+    max-width: none !important;
   }
-
   /* El canvas se ajusta al ancho que marque JS vía el stage */
   #qr-canvas {
-    width: 100% !important; /* llenar el stage */
-    height: auto; /* respetar proporción */
+    width: 100% !important;
+    height: auto;
     aspect-ratio: 3 / 1;
   }
 }

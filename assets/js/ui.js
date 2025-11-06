@@ -1,3 +1,4 @@
+// assets/js/ui.js
 (function () {
   // El modal debe colgar de #qr-app para ser visible en Fullscreen
   let root = document.querySelector("#qr-app #qr-modal-root");
@@ -11,13 +12,11 @@
   function emit(name) {
     window.dispatchEvent(new CustomEvent(name));
   }
-
   function close() {
     const m = document.querySelector(".qr-modal");
     if (m) m.remove();
     emit("qr:modal:close");
   }
-
   function isMobile() {
     return document.body.classList.contains("is-mobile");
   }
@@ -31,30 +30,27 @@
     const modal = document.createElement("div");
     modal.className = "qr-modal";
     const card = document.createElement("div");
-    card.className = "qr-card";
+    card.className = "qr-card qr-card--start";
 
     const desktopList = `
       <ul class="qr-startlist">
-        <li>Mueve al personaje con <span class="qr-startkbd">←</span> <span class="qr-startkbd">→</span> o <span class="qr-startkbd">A</span> <span class="qr-startkbd">D</span>.</li>
-        <li><strong>Salta y doble salto</strong> con <span class="qr-startkbd">↑</span> / <span class="qr-startkbd">W</span> / <span class="qr-startkbd">Espacio</span>.</li>
-        <li>Acércate a la <strong>Puerta 1</strong> para empezar el cuestionario.</li>
-        <li>Responde las <strong>8 preguntas</strong> y recibe tu recomendación.</li>
+        <li>Mueve al personaje con ← → / A D.</li>
+        <li>Salta y doble salto con ↑ / W / Espacio.</li>
+        <li>Acércate a la Puerta 1 para empezar.</li>
+        <li>Completa las 8 para tu recomendación.</li>
       </ul>`;
 
     const mobileList = `
       <ul class="qr-startlist">
-        <li>Al pulsar <strong>Jugar</strong> se abrirá en <strong>pantalla completa y horizontal</strong>.</li>
-        <li>Usa los <strong>botones táctiles</strong>:
-          <span class="qr-startkbd">←</span> <span class="qr-startkbd">→</span> para moverte y
-          <span class="qr-startkbd">⤒</span> para saltar (doble toque = doble salto).
-        </li>
-        <li>Ve hasta la <strong>Puerta 1</strong> para empezar el cuestionario.</li>
-        <li>Completa las <strong>8 preguntas</strong> para ver tu recomendación.</li>
+        <li>Al pulsar Jugar se abrirá en horizontal.</li>
+        <li>Usa los botones táctiles para moverte/saltar.</li>
+        <li>Ve hasta la Puerta 1 para empezar.</li>
+        <li>Completa las 8 y verás tu resultado.</li>
       </ul>`;
 
     card.innerHTML = `
       <h3 class="qr-title">🎮 Quiz Versus</h3>
-      <p class="qr-lead"><strong>Tu futuro empieza hoy.</strong> Descubre la oposición que mejor encaja contigo.</p>
+      <p class="qr-lead"><strong>Tu futuro empieza hoy.</strong></p>
       ${mobile ? mobileList : desktopList}
       <div class="qr-start-actions">
         <button class="qr-btn" id="qrStartBtn">Jugar</button>
@@ -82,35 +78,64 @@
 
     document.getElementById("qrStartBtn").addEventListener("click", start);
     window.addEventListener("keydown", keyHandler);
-
     emit("qr:modal:open");
   }
 
-  /* ===== Modal de selección de personaje ===== */
-  function selectHeroModal(onSelect) {
+  /* ===== Selección de personaje (con imágenes izquierda/derecha) ===== */
+  function selectHeroModal(maleUrl, femaleUrl, onSelect) {
     if (document.querySelector(".qr-modal")) return;
+
     const modal = document.createElement("div");
     modal.className = "qr-modal";
-
     const card = document.createElement("div");
-    card.className = "qr-card";
+    card.className = "qr-card qr-card--select";
+
     card.innerHTML = `
       <h3 class="qr-title">Elige tu personaje</h3>
-      <div class="qr-opts">
-        <button class="qr-opt" id="pickMale">Hombre</button>
-        <button class="qr-opt" id="pickFemale">Mujer</button>
+      <div class="qr-select" role="listbox" aria-label="Elige personaje">
+        <button class="qr-select__item" id="selMale"  aria-label="Hombre">
+          <div class="qr-select__imgwrap">
+            <img class="qr-select__img" src="${maleUrl}" alt="Hombre" />
+          </div>
+        </button>
+        <button class="qr-select__item" id="selFemale" aria-label="Mujer">
+          <div class="qr-select__imgwrap">
+            <img class="qr-select__img" src="${femaleUrl}" alt="Mujer" />
+          </div>
+        </button>
       </div>
     `;
+
     modal.appendChild(card);
     root.appendChild(modal);
 
-    card.querySelector("#pickMale").addEventListener("click", () => {
+    const pick = (g) => {
       close();
-      onSelect && onSelect("hombre");
-    });
-    card.querySelector("#pickFemale").addEventListener("click", () => {
-      close();
-      onSelect && onSelect("mujer");
+      onSelect && onSelect(g);
+    };
+    card
+      .querySelector("#selMale")
+      .addEventListener("click", () => pick("hombre"));
+    card
+      .querySelector("#selFemale")
+      .addEventListener("click", () => pick("mujer"));
+
+    // Accesibilidad con teclado
+    const items = card.querySelectorAll(".qr-select__item");
+    let idx = 0;
+    items[idx].focus();
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") {
+        idx = Math.min(items.length - 1, idx + 1);
+        items[idx].focus();
+      }
+      if (e.key === "ArrowLeft") {
+        idx = Math.max(0, idx - 1);
+        items[idx].focus();
+      }
+      if (e.key === "Enter") {
+        items[idx].click();
+      }
     });
 
     emit("qr:modal:open");
@@ -153,27 +178,27 @@
     const modal = document.createElement("div");
     modal.className = "qr-modal";
     const card = document.createElement("div");
-    card.className = "qr-card";
+    card.className = "qr-card qr-card--form";
 
     card.innerHTML = `
     <form id="qrLeadForm" novalidate>
-      <div class="qr-q">Déjanos tus datos y te enviaremos tu resultado</div>
+      <h3 class="qr-title">📩 Tus datos</h3>
 
       <div class="qr-row">
         <label for="fName">Nombre</label>
-        <input class="qr-input" id="fName" type="text" placeholder="Introduzca su nombre" maxlength="99" autocomplete="name">
+        <input class="qr-input" id="fName" type="text" placeholder="Nombre" maxlength="99" autocomplete="name">
         <div class="qr-error" id="errName"></div>
       </div>
 
       <div class="qr-row">
         <label for="fEmail">Email</label>
-        <input class="qr-input" id="fEmail" type="email" placeholder="Introduzca su dirección de correo electrónico" autocomplete="email" inputmode="email">
+        <input class="qr-input" id="fEmail" type="email" placeholder="Email" autocomplete="email" inputmode="email">
         <div class="qr-error" id="errEmail"></div>
       </div>
 
       <div class="qr-row">
         <label for="fPhone">Teléfono</label>
-        <input class="qr-input" id="fPhone" type="tel" placeholder="Introduzca su número de teléfono" inputmode="numeric" autocomplete="tel" pattern="\\d*">
+        <input class="qr-input" id="fPhone" type="tel" placeholder="Teléfono" inputmode="numeric" autocomplete="tel" pattern="\\d*">
         <div class="qr-error" id="errPhone"></div>
       </div>
 
@@ -182,30 +207,30 @@
         <div class="qr-error" id="errConsent"></div>
       </div>
 
-      <button class="qr-btn" id="btnSend" type="submit">Enviar</button>
+      <div class="qr-start-actions">
+        <button class="qr-btn" id="btnSend" type="submit">Enviar</button>
+      </div>
     </form>
   `;
 
     modal.appendChild(card);
-    const root2 =
+    const rootNode =
       document.querySelector("#qr-app #qr-modal-root") ||
       document.getElementById("qr-modal-root");
-    root2.appendChild(modal);
+    rootNode.appendChild(modal);
 
     const form = card.querySelector("#qrLeadForm");
     const nameI = card.querySelector("#fName");
     const mailI = card.querySelector("#fEmail");
     const phoneI = card.querySelector("#fPhone");
     const consI = card.querySelector("#fConsent");
-
     const errName = card.querySelector("#errName");
     const errEmail = card.querySelector("#errEmail");
     const errPhone = card.querySelector("#errPhone");
     const errCons = card.querySelector("#errConsent");
 
-    // == Validadores ==
+    // Validadores
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-
     function setErr(inputEl, errEl, msg) {
       if (msg) {
         errEl.textContent = msg;
@@ -215,79 +240,68 @@
         inputEl && inputEl.classList.remove("is-invalid");
       }
     }
-
     function validateName() {
       const v = (nameI.value || "").trim();
-      if (!v) {
-        setErr(nameI, errName, "El nombre es obligatorio.");
-        return false;
-      }
-      if (v.length > 99) {
-        setErr(nameI, errName, "Máximo 99 caracteres.");
-        return false;
-      }
+      if (!v) return setErr(nameI, errName, "El nombre es obligatorio."), false;
+      if (v.length > 99)
+        return setErr(nameI, errName, "Máximo 99 caracteres."), false;
       setErr(nameI, errName, "");
       return true;
     }
-
     function validateEmail() {
       const v = (mailI.value || "").trim();
-      if (!v) {
-        setErr(mailI, errEmail, "El email es obligatorio.");
-        return false;
-      }
-      if (!emailRe.test(v)) {
-        setErr(mailI, errEmail, "Introduce un email válido.");
-        return false;
-      }
+      if (!v) return setErr(mailI, errEmail, "El email es obligatorio."), false;
+      if (!emailRe.test(v))
+        return setErr(mailI, errEmail, "Introduce un email válido."), false;
       setErr(mailI, errEmail, "");
       return true;
     }
-
     function sanitizePhone() {
       let v = phoneI.value.replace(/[^\d+]/g, "");
       if (v.includes("+"))
         v = "+" + v.replace(/[+]/g, "").replace(/[^\d]/g, "");
       phoneI.value = v;
     }
-
     function validatePhone() {
       sanitizePhone();
       const v = phoneI.value.trim();
-      if (!v) {
-        setErr(phoneI, errPhone, "El teléfono es obligatorio.");
-        return false;
-      }
+      if (!v)
+        return setErr(phoneI, errPhone, "El teléfono es obligatorio."), false;
       const isIntl = v.startsWith("+");
       if (!isIntl) {
-        if (!/^\d{9}$/.test(v)) {
-          setErr(phoneI, errPhone, "Debe tener 9 dígitos si es español.");
-          return false;
-        }
+        if (!/^\d{9}$/.test(v))
+          return (
+            setErr(phoneI, errPhone, "Debe tener 9 dígitos si es español."),
+            false
+          );
       } else {
-        if (!/^\+\d{8,15}$/.test(v)) {
-          setErr(phoneI, errPhone, "Formato internacional no válido (+XX...).");
-          return false;
-        }
+        if (!/^\+\d{8,15}$/.test(v))
+          return (
+            setErr(
+              phoneI,
+              errPhone,
+              "Formato internacional no válido (+XX...)."
+            ),
+            false
+          );
       }
       setErr(phoneI, errPhone, "");
       return true;
     }
-
     function validateConsent() {
-      if (!consI.checked) {
-        setErr(consI, errCons, "Debes aceptar la Política de Privacidad.");
-        return false;
-      }
+      if (!consI.checked)
+        return (
+          setErr(consI, errCons, "Debes aceptar la Política de Privacidad."),
+          false
+        );
       setErr(consI, errCons, "");
       return true;
     }
-
     function validateAll() {
-      const a = validateName();
-      const b = validateEmail();
-      const c = validatePhone();
-      const d = validateConsent();
+      const a = validateName(),
+        b = validateEmail(),
+        c = validatePhone(),
+        d = validateConsent();
       return a && b && c && d;
     }
 
@@ -303,27 +317,14 @@
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       if (!validateAll()) {
-        if (!validateName()) {
-          nameI.focus();
-          return;
-        }
-        if (!validateEmail()) {
-          mailI.focus();
-          return;
-        }
-        if (!validatePhone()) {
-          phoneI.focus();
-          return;
-        }
-        if (!validateConsent()) {
-          consI.focus();
-          return;
-        }
+        if (!validateName()) return nameI.focus();
+        if (!validateEmail()) return mailI.focus();
+        if (!validatePhone()) return phoneI.focus();
+        if (!validateConsent()) return consI.focus();
         return;
       }
-
-      if (window.QRUI && typeof window.QRUI.close === "function")
-        window.QRUI.close();
+      // OK
+      close();
       onSubmit &&
         onSubmit({
           name: nameI.value.trim(),
@@ -333,7 +334,7 @@
         });
     });
 
-    window.dispatchEvent(new CustomEvent("qr:modal:open"));
+    emit("qr:modal:open");
   }
 
   /* ===== Pantalla final ===== */
@@ -363,16 +364,15 @@
     modal.appendChild(card);
     root.appendChild(modal);
     document.getElementById("btnRestart").addEventListener("click", onRestart);
-
     emit("qr:modal:open");
   }
 
   window.QRUI = {
     startModal,
+    selectHeroModal,
     questionModal,
     formModal,
     endingModal,
-    selectHeroModal,
     close,
   };
 })();
