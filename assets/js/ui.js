@@ -217,20 +217,41 @@
 
     // Solo números; longitud 9–15 (puedes ajustar si quieres)
     function sanitizePhone() {
-      const digits = (phoneI.value || "").replace(/\D+/g, "");
-      if (phoneI.value !== digits) phoneI.value = digits;
+      // Permite solo dígitos y el signo + al inicio
+      let v = phoneI.value.replace(/[^\d+]/g, "");
+      // Solo un '+' y solo al principio
+      if (v.includes("+")) {
+        v = "+" + v.replace(/[+]/g, "").replace(/[^\d]/g, "");
+      }
+      phoneI.value = v;
     }
+
     function validatePhone() {
       sanitizePhone();
       const v = phoneI.value.trim();
+
       if (!v) {
         setErr(phoneI, errPhone, "El teléfono es obligatorio.");
         return false;
       }
-      if (v.length < 9 || v.length > 15) {
-        setErr(phoneI, errPhone, "Debe tener entre 9 y 15 dígitos.");
-        return false;
+
+      // Detectar si tiene prefijo internacional
+      const isIntl = v.startsWith("+");
+
+      // España (sin +34)
+      if (!isIntl) {
+        if (!/^\d{9}$/.test(v)) {
+          setErr(phoneI, errPhone, "Debe tener 9 dígitos si es español.");
+          return false;
+        }
+      } else {
+        // Internacional: + y al menos 8 dígitos tras el prefijo
+        if (!/^\+\d{8,15}$/.test(v)) {
+          setErr(phoneI, errPhone, "Formato internacional no válido (+XX...).");
+          return false;
+        }
       }
+
       setErr(phoneI, errPhone, "");
       return true;
     }
