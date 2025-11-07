@@ -12,7 +12,6 @@
     gLite: "#9d9d9c",
     black: "#000000",
   };
-
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const rand = (min, max) => Math.random() * (max - min) + min;
 
@@ -56,20 +55,22 @@
       this.hero = {
         x: this.startX - 140,
         y: this.footY,
-        w: 42, // ancho de la caja de colisión (física)
-        h: 42, // alto de la caja de colisión (física)
+        w: 42,
+        h: 42,
         dx: 0,
         vy: 0,
-        dh: 58, // altura de DIBUJO del sprite (no afecta a la física)
+        dh: 58,
       };
 
       this.anim = { facing: 1, walkTimer: 0, frameDur: 0.12 };
       this.camX = 0;
 
       this.obstacles = this.createObstacles();
-
       this.flyers = [];
       this.flyTimer = 0;
+
+      // 🔒 Bloqueo temporal de input para evitar salto tras cerrar modal
+      this.inputLockUntil = 0;
 
       this.loop = createLoop(this.update.bind(this), this.render.bind(this));
 
@@ -81,6 +82,11 @@
           code === "ArrowDown" ||
           e.key === " " ||
           code === "Spacebar";
+
+        // Si hay modal o input bloqueado, ignoramos
+        if (document.querySelector(".qr-modal")) return;
+        if (this.isInputLocked()) return;
+
         if (isScrollKey && !this.isTypingTarget(e.target)) e.preventDefault();
         if (code === "Space" || code === "ArrowUp" || code === "KeyW")
           this.queueJump();
@@ -88,6 +94,14 @@
       window.addEventListener("keydown", this.onKeyDown, { passive: false });
 
       if (this.hudBadge) this.hudBadge.textContent = `1 / ${this.stations}`;
+    }
+
+    // === Utilidades input lock ===
+    lockInput(ms = 220) {
+      this.inputLockUntil = performance.now() + ms;
+    }
+    isInputLocked() {
+      return performance.now() < this.inputLockUntil;
     }
 
     isTypingTarget(el) {
@@ -104,6 +118,21 @@
     queueJump() {
       this.jumpBufferT = this.jumpBuffer;
     }
+    _clearJumpInputs() {
+      this.jumpBufferT = 0;
+      const pressed =
+        window.MicroLoop &&
+        window.MicroLoop.Keys &&
+        window.MicroLoop.Keys.pressed;
+      if (pressed && pressed.delete) {
+        pressed.delete("Space");
+        pressed.delete(" ");
+        pressed.delete("Spacebar");
+        pressed.delete("ArrowUp");
+        pressed.delete("KeyW");
+      }
+    }
+
     start() {
       this.loop.start();
     }
@@ -131,8 +160,8 @@
         if (Math.random() < 0.7) {
           const x1 = this.portalX[i],
             x2 = this.portalX[i + 1];
-          const leftSafe = x1 + 80;
-          const rightSafe = x2 - 80;
+          const leftSafe = x1 + 80,
+            rightSafe = x2 - 80;
           const span = Math.max(120, rightSafe - leftSafe);
 
           if (Math.random() < 0.5) {
@@ -141,8 +170,8 @@
           } else {
             const cx = leftSafe + rand(span * 0.2, span * 0.55);
             list.push({ x: cx, w: baseW, h: baseH, yBottom: this.footY });
-            const gap = 16 + rand(0, 12);
-            const raise = 22 + rand(0, 10);
+            const gap = 16 + rand(0, 12),
+              raise = 22 + rand(0, 10);
             const cx2 = cx + baseW + gap;
             list.push({
               x: cx2,
@@ -160,16 +189,16 @@
       if (!this.obstacles.length) return;
 
       const hero = this.hero;
-      const leftH = hero.x - hero.w / 2;
-      const rightH = hero.x + hero.w / 2;
-      const topH = hero.y - hero.h;
-      const bottomH = hero.y;
+      const leftH = hero.x - hero.w / 2,
+        rightH = hero.x + hero.w / 2;
+      const topH = hero.y - hero.h,
+        bottomH = hero.y;
 
       for (const o of this.obstacles) {
-        const topO = o.yBottom - o.h;
-        const bottomO = o.yBottom;
-        const leftO = o.x - o.w / 2;
-        const rightO = o.x + o.w / 2;
+        const topO = o.yBottom - o.h,
+          bottomO = o.yBottom;
+        const leftO = o.x - o.w / 2,
+          rightO = o.x + o.w / 2;
 
         const overlapX = leftH < rightO && rightH > leftO;
         const overlapY = topH < bottomO && bottomH > topO;
@@ -184,8 +213,8 @@
           continue;
         }
 
-        const penLeft = rightH - leftO;
-        const penRight = rightO - leftH;
+        const penLeft = rightH - leftO,
+          penRight = rightO - leftH;
         if (penLeft < penRight) {
           hero.x -= penLeft;
           hero.dx = Math.min(0, hero.dx);
@@ -199,7 +228,6 @@
     hasActive(type) {
       return this.flyers.some((f) => f.type === type);
     }
-
     pickFlyerType() {
       const pool = [];
       const add = (type, w) => pool.push({ type, w });
@@ -231,22 +259,19 @@
         return;
       }
 
-      const leftEdge = this.camX;
-      const rightEdge = this.camX + this.W;
-
+      const leftEdge = this.camX,
+        rightEdge = this.camX + this.W;
       const scaleByType = (t) =>
         t === "pajaro1" || t === "pajaro2" ? 0.85 : 1.0;
 
       if (type === "cometa") {
-        const dir = Math.random() < 0.5 ? 1 : -1; // 1 = izq→der, -1 = der→izq
+        const dir = Math.random() < 0.5 ? 1 : -1;
         const speed = rand(280, 420);
         const vx = speed * (dir === 1 ? 1 : -1);
-        const vy = speed * rand(0.45, 0.75); // diagonal descendente
+        const vy = speed * rand(0.45, 0.75);
         const y0 = rand(-30, 40);
         const x0 = dir === 1 ? leftEdge - 120 : rightEdge + 120;
-
         const flipX = dir === 1;
-
         this.flyers.push({
           type,
           img,
@@ -287,7 +312,6 @@
         s: scaleByType(type),
         flipX,
       });
-
       this.flyTimer =
         type === "marciano" || type === "nave"
           ? rand(1.4, 2.4)
@@ -295,13 +319,16 @@
     }
 
     update(dt) {
+      // Si el input está bloqueado, drenamos cualquier salto residual
+      if (this.isInputLocked()) this._clearJumpInputs();
+
       const goRight =
         Keys.isDown("ArrowRight") || Keys.isDown("KeyD") || !!this.pad.right;
       const goLeft =
         Keys.isDown("ArrowLeft") || Keys.isDown("KeyA") || !!this.pad.left;
 
-      const prevX = this.hero.x;
-      const prevY = this.hero.y;
+      const prevX = this.hero.x,
+        prevY = this.hero.y;
 
       if (goRight) this.hero.dx += 0.8;
       if (goLeft) this.hero.dx -= 0.7;
@@ -312,8 +339,10 @@
 
       this.hero.x += this.hero.dx;
 
-      if (this.jumpBufferT > 0) {
+      if (!this.isInputLocked() && this.jumpBufferT > 0) {
         if (this.tryJump()) this.jumpBufferT = 0;
+      } else {
+        this.jumpBufferT = 0;
       }
 
       this.hero.vy += this.gravity * dt;
@@ -345,7 +374,19 @@
         this.hero.dx = 0;
         this.stop();
 
+        // 🔒 Bloquea input mientras aparece el modal
+        this.lockInput(700);
+
         const qObj = QUESTIONS[this.step];
+        const isLast =
+          this.step === this.stations - 1 || (qObj && qObj.id === "form");
+
+        // SFX puerta / victoria
+        if (window.QRAudio) {
+          if (isLast) window.QRAudio.playVictory();
+          else window.QRAudio.playDoor();
+        }
+
         if (qObj.id === "form") {
           formModal(async ({ name, email, phone, consent }) => {
             try {
@@ -371,7 +412,7 @@
               let data = null;
               try {
                 data = await r.json();
-              } catch (e) {}
+              } catch {}
 
               if (!r.ok || !data || data.success !== true) {
                 const msg =
@@ -383,7 +424,7 @@
                 return;
               }
               this.finish();
-            } catch (e) {
+            } catch {
               alert("Error de red. Inténtalo de nuevo.");
               this.start();
             }
@@ -392,6 +433,8 @@
         }
 
         questionModal(qObj, (opt) => {
+          if (window.QRAudio) window.QRAudio.playAnswer();
+
           const choice = { id: qObj.id, q: qObj.q, value: opt };
           this.answers.push(choice);
           applyScoring(this.score, choice);
@@ -403,20 +446,29 @@
               this.stations
             )} / ${this.stations}`;
 
-          this.start();
-          this.hero.dx = 1.2;
+          // Anti-salto al cerrar el modal:
+          this._clearJumpInputs();
+          this.lockInput(360);
+          this.hero.vy = 0;
+          this.jumpCount = 0;
+          this.coyoteTimer = 0;
+
+          // Reanudar un frame después
+          requestAnimationFrame(() => {
+            this.start();
+            this.hero.dx = 1.2;
+          });
         });
       }
 
       this.flyTimer -= dt;
       if (this.flyTimer <= 0) this.spawnFlyer();
 
-      const leftEdge = this.camX;
-      const rightEdge = this.camX + this.W;
+      const leftEdge = this.camX,
+        rightEdge = this.camX + this.W;
 
       for (let i = this.flyers.length - 1; i >= 0; i--) {
         const f = this.flyers[i];
-
         if (f.vx !== undefined) {
           f.x += f.vx * dt;
           f.y += f.vy * dt;
@@ -424,20 +476,17 @@
             f.y > this.H + 80 ||
             f.x < leftEdge - 160 ||
             f.x > rightEdge + 160
-          ) {
+          )
             this.flyers.splice(i, 1);
-          }
         } else {
           f.t += dt;
           f.x += f.speed * dt;
           f.y = f.baseY + Math.sin(f.t * f.freq) * f.amp;
-
           if (
             (f.dir === 1 && f.x > rightEdge + 120) ||
             (f.dir === -1 && f.x < leftEdge - 120)
-          ) {
+          )
             this.flyers.splice(i, 1);
-          }
         }
       }
     }
@@ -450,6 +499,7 @@
         if (this.onGround() || this.coyoteTimer > 0) this.jumpCount = 1;
         else this.jumpCount++;
         this.coyoteTimer = 0;
+        if (window.QRAudio) window.QRAudio.playJump();
         return true;
       }
       return false;
@@ -477,9 +527,8 @@
         const drawW = Math.ceil(iw * scale);
         const factor = 1.0;
         const offset = -Math.floor(this.camX * factor) % drawW;
-        for (let x = offset - drawW; x < W + drawW; x += drawW) {
+        for (let x = offset - drawW; x < W + drawW; x += drawW)
           ctx.drawImage(bg, x, 0, drawW, H);
-        }
       } else {
         const g = ctx.createLinearGradient(0, 0, 0, H);
         g.addColorStop(0, "#f3f3f3");
@@ -498,9 +547,8 @@
           const s = f.s || 1;
           const dw = Math.max(1, Math.round(img.width * s));
           const dh = Math.max(1, Math.round(img.height * s));
-          const x = Math.round(f.x);
-          const y = Math.round(f.y);
-
+          const x = Math.round(f.x),
+            y = Math.round(f.y);
           if (f.flipX) {
             ctx.save();
             ctx.translate(x + dw, y);
@@ -513,12 +561,11 @@
         }
       }
 
-      const DOOR_H = 80;
-      const TROPHY_H = 120;
+      const DOOR_H = 80,
+        TROPHY_H = 120;
       for (let i = 0; i < this.stations; i++) {
-        const x = this.portalX[i];
-        const isLast = i === this.stations - 1;
-
+        const x = this.portalX[i],
+          isLast = i === this.stations - 1;
         let img = null,
           targetH = DOOR_H;
         if (isLast && this.assets.copa) {
@@ -531,8 +578,8 @@
 
         if (img) {
           const scale = targetH / img.height;
-          const w = Math.round(img.width * scale);
-          const h = Math.round(img.height * scale);
+          const w = Math.round(img.width * scale),
+            h = Math.round(img.height * scale);
           const yTop = yBottom - h;
 
           const inactive = !isLast && i > this.step;
@@ -572,8 +619,8 @@
       if (this.obstacles.length) {
         const img = this.assets.obstaculo;
         for (const o of this.obstacles) {
-          const left = o.x - o.w / 2;
-          const top = o.yBottom - o.h;
+          const left = o.x - o.w / 2,
+            top = o.yBottom - o.h;
           if (img)
             ctx.drawImage(img, Math.round(left), Math.round(top), o.w, o.h);
           else {
@@ -589,8 +636,8 @@
         const lift = Math.max(0, yBottom - this.hero.y);
         const maxLift = 120;
         const t = Math.min(1, lift / maxLift);
-        const sx = 26 * (1 - 0.6 * t);
-        const sy = 8 * (1 - 0.7 * t);
+        const sx = 26 * (1 - 0.6 * t),
+          sy = 8 * (1 - 0.7 * t);
         ctx.save();
         ctx.globalAlpha = 0.15;
         ctx.beginPath();
@@ -608,36 +655,29 @@
         ctx.restore();
       }
 
-      // --- HERO ---
+      // HERO
       ctx.save();
       ctx.translate(this.hero.x, this.hero.y);
-
       const hasHero =
         this.assets.hero &&
         this.assets.hero.idle &&
         this.assets.hero.stepR &&
         this.assets.hero.stepL &&
         this.assets.hero.jump;
-
       if (hasHero) {
         let sprite = this.assets.hero.idle;
-        if (!this.onGround()) {
-          sprite = this.assets.hero.jump;
-        } else if (Math.abs(this.hero.dx) > 0.35) {
+        if (!this.onGround()) sprite = this.assets.hero.jump;
+        else if (Math.abs(this.hero.dx) > 0.35) {
           const n = Math.floor(this.anim.walkTimer / this.anim.frameDur) % 2;
           sprite = n === 0 ? this.assets.hero.stepR : this.assets.hero.stepL;
         }
-
-        // Altura de dibujo fija + anchura proporcional al PNG (evita “achatado”)
         const drawH = this.hero.dh || 58;
         const ratio =
           sprite && sprite.height ? sprite.width / sprite.height : 1;
         const drawW = Math.max(1, Math.round(drawH * ratio));
-
         if (this.anim.facing === -1) ctx.scale(-1, 1);
         ctx.drawImage(sprite, -drawW / 2, -drawH, drawW, drawH);
       } else {
-        // Fallback “caja” si faltan assets
         ctx.fillStyle = BRAND.light;
         ctx.fillRect(-this.hero.w / 2, -this.hero.h, this.hero.w, this.hero.h);
         ctx.lineWidth = 3;
@@ -651,7 +691,6 @@
         ctx.fillStyle = "#fff";
         ctx.fillRect(-10, -this.hero.h + 6, 20, 12);
       }
-
       ctx.restore();
 
       ctx.restore();

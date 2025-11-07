@@ -135,6 +135,8 @@ body {
   font-family: "Press Start 2P", monospace;
   font-size: 16px;
   margin: 0 0 12px;
+  word-break: break-word;
+  hyphens: auto;
 }
 .qr-q {
   font-size: 16px;
@@ -458,35 +460,82 @@ body {
   box-shadow: 0 3px 0 #000, 0 0 0 2px rgba(211, 47, 47, 0.15) inset;
 }
 
-/* ===== Ventanas con altura fija (Inicio y Formulario) ===== */
-.qr-card--start,
-.qr-card--form {
+/* ===== Ventanas (Inicio y Formulario) ===== */
+/* Separado para evitar que el formulario se corte */
+.qr-card--start {
   width: 640px;
-  height: 420px; /* escritorio */
   max-width: 90vw;
-  max-height: 90vh; /* seguridad en pantallas pequeñas */
+  max-height: min(90vh, 520px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: center; /* centrado en la pantalla de inicio */
 }
 
-/* Móvil vertical: más alto */
-@media (max-width: 768px) and (orientation: portrait) {
-  .qr-card--start,
+.qr-card--form {
+  width: 640px;
+  max-width: 90vw;
+  height: auto; /* sin altura fija */
+  /* FIX: que nunca se corte; scroll interno si hace falta */
+  max-height: calc(
+    100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* alinear arriba para que quepa todo */
+  align-items: stretch;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable both-edges;
+}
+
+@supports not (height: 100dvh) {
   .qr-card--form {
-    width: 90vw;
-    height: 500px; /* fijo en vertical */
+    max-height: calc(
+      100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
   }
 }
 
-/* Móvil horizontal: más bajo y compacto, sin que se corte */
+/* Móvil vertical: ancho y altura adaptables SIN cortar contenido */
+@media (max-width: 768px) and (orientation: portrait) {
+  .qr-card--start {
+    width: 90vw;
+    max-height: calc(
+      100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
+  }
+  .qr-card--form {
+    width: 90vw;
+    padding: 16px;
+  }
+  @supports not (height: 100dvh) {
+    .qr-card--start {
+      max-height: calc(
+        100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+      );
+    }
+  }
+}
+
+/* Móvil horizontal: compacto, SIN overflow hidden (no cortar) */
 @media (max-width: 768px) and (orientation: landscape) {
   .qr-card--start,
   .qr-card--form {
     width: 96vw;
-    height: 340px; /* fijo en horizontal */
-    overflow: hidden;
-    padding: 12px 14px; /* compacto */
+    /* FIX: sustituye la altura fija y el overflow hidden por alto adaptable + scroll */
+    max-height: calc(
+      100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
+    overflow: auto;
+    padding: 12px 14px;
+  }
+  @supports not (height: 100dvh) {
+    .qr-card--start,
+    .qr-card--form {
+      max-height: calc(
+        100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+      );
+    }
   }
   .qr-card--start .qr-title,
   .qr-card--form .qr-title {

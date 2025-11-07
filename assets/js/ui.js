@@ -64,10 +64,13 @@
       window.removeEventListener("keydown", keyHandler);
       close();
     };
+    
     const start = () => {
+      // La música se inicia en bootstrap tras el clic; aquí solo cerramos y arrancamos.
       cleanup();
       onPlay && onPlay();
     };
+
     const keyHandler = (e) => {
       const k = (e.key || "").toLowerCase();
       if (k === "enter" || k === " ") {
@@ -160,6 +163,8 @@
       b.className = "qr-opt";
       b.textContent = op;
       b.addEventListener("click", () => {
+        // SFX respuesta
+        if (window.QRAudio) window.QRAudio.playAnswer();
         close();
         onAnswer && onAnswer(op);
       });

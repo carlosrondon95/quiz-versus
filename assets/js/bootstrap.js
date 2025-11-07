@@ -7,13 +7,12 @@
   const padEl = document.getElementById("qr-pad");
   if (!canvas || !stage || !appRoot) return;
 
-  // Resolver BASE del plugin de forma robusta
   function detectBaseFromScript() {
     const scripts = document.getElementsByTagName("script");
     for (let i = 0; i < scripts.length; i++) {
       const s = scripts[i].src || "";
       const idx = s.indexOf("/assets/js/bootstrap.js");
-      if (idx !== -1) return s.slice(0, idx + 1); // incluye / al final
+      if (idx !== -1) return s.slice(0, idx + 1);
     }
     return "/";
   }
@@ -24,15 +23,11 @@
         : qrAjax.base_url + "/"
       : detectBaseFromScript();
 
-  // ===== Helpers de carga =====
   function loadImage(src) {
     return new Promise((res, rej) => {
       const img = new Image();
       img.onload = () => res(img);
-      img.onerror = () => {
-        console.error("[QuizRunner] No se pudo cargar:", src);
-        rej(new Error("Image load error: " + src));
-      };
+      img.onerror = () => rej(new Error("Image load error: " + src));
       img.src = src;
     });
   }
@@ -74,7 +69,6 @@
     return Object.fromEntries(entries);
   }
 
-  // ===== Detección móvil =====
   const isMobile = (function () {
     const ua = (
       navigator.userAgent ||
@@ -96,25 +90,19 @@
   if (isMobile) document.body.classList.add("is-mobile");
   else document.body.classList.remove("is-mobile");
 
-  // ===== “Modo ancho” en ESCRITORIO (centrado y tamaño contenido) =====
   function applyDesktopWide() {
     const vw = Math.max(
       document.documentElement.clientWidth,
       window.innerWidth || 0
     );
     const targetW = Math.round(Math.min(Math.max(vw * 0.84, 1200), 1600));
-    const targetH = Math.round(targetW / 3); // relación 3:1
-
+    const targetH = Math.round(targetW / 3);
     stage.style.width = targetW + "px";
     stage.style.height = targetH + "px";
-    stage.style.minWidth = "";
-    stage.style.minHeight = "";
     stage.style.maxWidth = "100%";
-    stage.style.margin = "0 auto"; // centrado
-
+    stage.style.margin = "0 auto";
     canvas.style.width = "100%";
     canvas.style.height = targetH + "px";
-
     appRoot.classList.add("qr-wide");
   }
 
@@ -124,22 +112,37 @@
   const padState = { left: false, right: false };
 
   window.QRUI.startModal(async () => {
+    // 🔊 Audio: inicializa y lanza música tras el clic en "Jugar"
+    if (window.QRAudio) {
+      try {
+        window.QRAudio.init(BASE);
+        window.QRAudio.playMusic().catch(() => {});
+      } catch (e) {
+        console.warn("[QuizRunner] Audio init:", e);
+      }
+    }
+
     if (isMobile) {
       viewport = new QRViewport(canvas, stage, padEl);
       virtualPad = new VirtualPad({
         onJump: () => {
-          if (window.game) window.game.queueJump();
+          if (window.game && !window.game.isInputLocked())
+            window.game.queueJump();
         },
       });
       fsMgr = new QRFS(appRoot, stage, padEl);
-      await fsMgr.enter();
-
+      try {
+        await fsMgr.enter();
+      } catch {}
       const btnL = document.getElementById("qr-pad-left");
       const btnR = document.getElementById("qr-pad-right");
       (function loopPad() {
-        padState.left = btnL && btnL.classList.contains("qr-pad__btn--pressed");
-        padState.right =
-          btnR && btnR.classList.contains("qr-pad__btn--pressed");
+        padState.left = !!(
+          btnL && btnL.classList.contains("qr-pad__btn--pressed")
+        );
+        padState.right = !!(
+          btnR && btnR.classList.contains("qr-pad__btn--pressed")
+        );
         requestAnimationFrame(loopPad);
       })();
     } else {
@@ -152,7 +155,6 @@
       window.addEventListener("resize", applyDesktopWide);
     }
 
-    // Selección de personaje con imágenes (izq = hombre, der = mujer)
     const malePreview = `${BASE}assets/img/hombre/hombre.png`;
     const femalePreview = `${BASE}assets/img/mujer/mujer.png`;
 

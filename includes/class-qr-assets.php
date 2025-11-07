@@ -15,7 +15,7 @@ class QR_Assets
       return;
     }
 
-    // Versión por fichero
+    // Versión por fichero (cache bust)
     $ver = function ($relPath) {
       $path = QR_PLUGIN_DIR . ltrim($relPath, '/');
       return file_exists($path) ? (string) filemtime($path) : (string) time();
@@ -77,7 +77,16 @@ class QR_Assets
       true
     );
 
-    // Game + Bootstrap
+    // 🔊 AUDIO (nuevo)
+    wp_enqueue_script(
+      'qr-audio',
+      QR_PLUGIN_URL . 'assets/js/audio.js',
+      [],
+      $ver('assets/js/audio.js'),
+      true
+    );
+
+    // Game + Bootstrap (bootstrap depende de audio para que QRAudio exista)
     wp_enqueue_script(
       'qr-game',
       QR_PLUGIN_URL . 'assets/js/game.js',
@@ -88,17 +97,17 @@ class QR_Assets
     wp_enqueue_script(
       'qr-bootstrap',
       QR_PLUGIN_URL . 'assets/js/bootstrap.js',
-      ['qr-game', 'qr-fs'],
+      ['qr-game', 'qr-fs', 'qr-audio'],
       $ver('assets/js/bootstrap.js'),
       true
     );
 
-    // Datos para AJAX/branding + base_url para imágenes
+    // Datos para AJAX/branding + base_url para rutas
     wp_localize_script('qr-bootstrap', 'qrAjax', [
       'ajax_url' => admin_url('admin-ajax.php'),
       'nonce' => wp_create_nonce(QR_Ajax::NONCE),
       'brand' => ['primary' => '#d09e55', 'font' => 'Poppins'],
-      'base_url' => QR_PLUGIN_URL, // <--- importante para rutas de imágenes
+      'base_url' => QR_PLUGIN_URL,
     ]);
   }
 }
