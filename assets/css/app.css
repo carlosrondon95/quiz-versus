@@ -25,7 +25,6 @@ body {
   font-family: "Poppins", system-ui, -apple-system, sans-serif;
   color: var(--ink);
   overflow-x: hidden;
-  /* Fondo azul celeste */
   background: var(--bg-sky, #cfefff);
 }
 
@@ -76,7 +75,7 @@ body {
   font-size: 11px;
 }
 
-/* Pistas según dispositivo */
+/* Pistas */
 .qr-hint--mobile {
   display: none;
 }
@@ -110,15 +109,15 @@ body {
   touch-action: none;
 }
 
-/* ===== Modal retro ===== */
+/* ===== Modales dentro del STAGE ===== */
 .qr-modal {
-  position: absolute; /* dentro del stage */
+  position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10006; /* por encima del canvas */
+  z-index: 10006;
 }
 .qr-card {
   background: #fff;
@@ -126,7 +125,7 @@ body {
   outline: 6px solid #fff;
   box-shadow: 0 0 0 6px var(--gray-dark), 0 8px 0 var(--black);
   border-radius: 6px;
-  max-width: 640px;
+  max-width: 640px; /* mismo que “Ceremonia de Asignación” */
   width: calc(100% - 24px);
   padding: 18px;
   text-align: center;
@@ -203,9 +202,8 @@ body {
   box-shadow: 0 2px 0 var(--brand-dark);
 }
 
-/* ===== Final / resultado ===== */
+/* Final */
 .qr-end .qr-title {
-  font-family: "Press Start 2P", monospace;
   font-size: 16px;
   margin: 0 0 12px;
 }
@@ -248,7 +246,7 @@ body {
   opacity: 0;
 }
 
-/* ====== Virtual Pad ====== */
+/* ===== Virtual Pad ===== */
 .qr-pad {
   position: fixed;
   left: 0;
@@ -297,8 +295,6 @@ body {
   background: rgba(0, 0, 0, 0.95);
   padding-bottom: calc(8px + env(safe-area-inset-bottom));
 }
-
-/* Posición en landscape: un poco más arriba */
 .qr-pad--landscape .qr-pad__left {
   position: fixed;
   left: 16px;
@@ -316,7 +312,7 @@ body {
   box-shadow: none;
 }
 
-/* ===== Botón salir (✕) ===== */
+/* Botón salir */
 .qr-exit {
   position: fixed;
   z-index: 10003;
@@ -324,7 +320,7 @@ body {
   left: 8px;
   width: 44px;
   height: 44px;
-  display: none; /* controlado por estado */
+  display: none;
   align-items: center;
   justify-content: center;
   border-radius: 12px;
@@ -343,12 +339,12 @@ body {
   background: rgba(0, 0, 0, 0.45);
 }
 
-/* ===== Overlay "Gira el móvil" ===== */
+/* Overlay "Gira" */
 .qr-rotate {
   position: absolute;
   inset: 0;
   z-index: 10004;
-  display: none; /* visible solo en móvil + FS + portrait */
+  display: none;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.8);
@@ -371,23 +367,19 @@ body {
   opacity: 0.95;
 }
 
-/* ===== Visibilidad por estado ===== */
+/* Visibilidad */
 #qr-exit {
   display: none;
 }
 .is-mobile #qr-app .qr-pad {
   display: none;
 }
-
-/* En móvil + fullscreen, mostrar pad y X */
 .is-mobile #qr-app.qr-app--fs .qr-pad {
   display: block;
 }
 .is-mobile #qr-app.qr-app--fs .qr-exit {
   display: flex;
 }
-
-/* En móvil + fullscreen + portrait => ocultar stage y mostrar overlay de giro */
 .is-mobile #qr-app.qr-app--fs.is-portrait #qr-rotate {
   display: flex;
 }
@@ -395,7 +387,7 @@ body {
   display: none;
 }
 
-/* ===== Ajustes tipográficos en FS ===== */
+/* Tipografía en FS (se escalan además por JS con fitCardToStage) */
 #qr-app.qr-app--fs .qr-card {
   max-width: min(640px, 92vw);
 }
@@ -410,7 +402,7 @@ body {
   padding: clamp(10px, 2.2vw, 14px) clamp(12px, 2.4vw, 16px);
 }
 
-/* ===== Responsive móvil (detalles HUD) ===== */
+/* HUD móvil */
 @media (max-width: 768px) {
   .qr-hud {
     font-size: 11px;
@@ -420,8 +412,7 @@ body {
   }
 }
 
-/* === FIX: ocultar el stage en móvil vertical FUERA de fullscreen,
-   PERO permitir verlo si hay modal (menú "Jugar") === */
+/* Ocultar stage en móvil vertical fuera de FS, salvo cuando modal abierto de inicio */
 @media (orientation: portrait) {
   .is-mobile #qr-app:not(.qr-app--fs) #qr-stage {
     display: none;
@@ -431,7 +422,7 @@ body {
   }
 }
 
-/* === Refuerzo específico en FULLSCREEN: botones un poco más pequeños y más arriba === */
+/* Botones pad en FS más compactos */
 .is-mobile #qr-app.qr-app--fs .qr-pad__btn {
   min-width: clamp(40px, 9vw, 56px);
   min-height: clamp(40px, 9vw, 56px);
@@ -442,7 +433,7 @@ body {
   bottom: calc(28px + env(safe-area-inset-bottom));
 }
 
-/* === Errores de validación inline del formulario === */
+/* Errores inline (altura fija para que no salte el layout) */
 .qr-error {
   color: #d32f2f;
   font-size: 12px;
@@ -455,7 +446,7 @@ body {
   box-shadow: 0 3px 0 #000, 0 0 0 2px rgba(211, 47, 47, 0.15) inset;
 }
 
-/* ===== Ventanas (Inicio y Formulario) ===== */
+/* ===== Ventanas ===== */
 .qr-card--start {
   width: 640px;
   max-width: 90vw;
@@ -465,77 +456,54 @@ body {
   justify-content: center;
 }
 
+/* === FORM: igual tamaño que “Ceremonia” + aún más compacto en móvil === */
 .qr-card--form {
-  width: 640px;
-  max-width: 90vw;
-  height: auto;
-  max-height: calc(
-    100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-  );
+  /* Misma caja que .qr-card / .qr-end */
+  max-width: 640px;
+  width: calc(100% - 24px);
+  padding: 16px;
+  /* Sin forzar alturas: dejamos que JS lo escale si hace falta */
+  max-height: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: stretch;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable both-edges;
+}
+/* Grid para nombre + teléfono en la misma fila */
+.qr-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+/* Política de privacidad en azul y subrayada */
+.qr-link,
+.qr-link:visited {
+  color: #1976d2;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.qr-link:hover,
+.qr-link:focus {
+  text-decoration: underline;
+  filter: brightness(0.9);
+  outline: 0;
 }
 
-@supports not (height: 100dvh) {
-  .qr-card--form {
-    max-height: calc(
-      100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-    );
-  }
-}
-
-/* Móvil vertical */
-@media (max-width: 768px) and (orientation: portrait) {
-  .qr-card--start {
-    width: 90vw;
-    max-height: calc(
-      100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-    );
-  }
-  .qr-card--form {
-    width: 90vw;
-    padding: 16px;
-  }
-  @supports not (height: 100dvh) {
-    .qr-card--start {
-      max-height: calc(
-        100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-      );
-    }
+/* En pantallas estrechas, cae a una columna (evita cortes) */
+@media (max-width: 560px) {
+  .qr-form-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-/* Móvil horizontal */
+/* Afinado extra en landscape móvil para que quepa sin scroll visual */
 @media (max-width: 768px) and (orientation: landscape) {
-  .qr-card--start,
   .qr-card--form {
-    width: 96vw;
-    max-height: calc(
-      100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-    );
-    overflow: auto;
     padding: 12px 14px;
   }
-  @supports not (height: 100dvh) {
-    .qr-card--start,
-    .qr-card--form {
-      max-height: calc(
-        100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-      );
-    }
-  }
-  .qr-card--start .qr-title,
   .qr-card--form .qr-title {
     font-size: 14px;
     margin-bottom: 8px;
-  }
-  .qr-startlist li {
-    margin: 4px 0;
   }
   .qr-card--form .qr-row {
     margin: 6px 0;
@@ -544,14 +512,13 @@ body {
     padding: 10px;
     font-size: 13px;
   }
-  .qr-card--start .qr-btn,
   .qr-card--form .qr-btn {
     padding: 10px 12px;
     font-size: 13px;
   }
 }
 
-/* ===== Selector personaje ===== */
+/* Selector personaje */
 .qr-card--select {
   width: 560px;
   height: 360px;
@@ -589,7 +556,7 @@ body {
 }
 .qr-select__imgwrap {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1/1;
   display: grid;
   place-items: center;
   padding: 2px;
@@ -601,8 +568,6 @@ body {
   width: auto;
   height: auto;
 }
-
-/* Selector responsive */
 @media (max-width: 768px) and (orientation: portrait) {
   .qr-card--select {
     width: 90vw;
@@ -646,7 +611,7 @@ body {
   }
 }
 
-/* ===== Modo ancho escritorio ===== */
+/* Modo ancho escritorio */
 @media (min-width: 1024px) {
   #qr-app.qr-wide {
     max-width: 100vw;
