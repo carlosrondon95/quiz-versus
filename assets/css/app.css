@@ -797,19 +797,38 @@ body {
   font-size: clamp(18px, 3vw, 24px) !important;
 }
 
+/* ===== Ajustes pedidos: bordes más finos, rosa en respuestas/inputs, errores más visibles ===== */
 
-/* Si quieres mantener solo una sombra inferior sutil en las tarjetas,
-   comenta el box-shadow:none anterior de .qr-card y usa esto:
-.qr-card { box-shadow: 0 6px 0 #000 !important; }
-*/
+/* 1) Cuadros de diálogo (todas las tarjetas/modales): borde más fino */
+.qr-card,
+.qr-card.qr-card--start,
+.qr-card.qr-card--question,
+.qr-card.qr-card--form,
+.qr-card.qr-end {
+  border-width: 5px !important; /* antes 8px */
+}
 
-/* Mantener botones como estaban (marca), pero puedes descomentar si quieres tematizarlos también */
-/*
-.qr-card--form .qr-btn {
-  background: #e71d73;
-  box-shadow: 0 4px 0 #b11456;
+/* 2) Respuestas y campos del formulario: borde rosa #e71d73 */
+.qr-opt,
+.qr-input {
+  border-color: #e71d73 !important;
 }
-.qr-card--form .qr-btn:active {
-  box-shadow: 0 2px 0 #b11456;
+
+/* Opcional: mantén el mismo rosa al pasar el ratón por las respuestas */
+.qr-opt:hover,
+.qr-opt:focus {
+  border-color: #e71d73 !important;
 }
-*/
+
+/* 3) Errores del formulario: un pelín más grandes y gruesos */
+.qr-card--form .qr-error {
+  font-size: 14px; /* antes 12px */
+  font-weight: 700; /* más “grosor” */
+  line-height: 1.35;
+  min-height: 16px; /* evitar saltos de layout */
+}
+
+/* Escalado coherente en fullscreen */
+#qr-app.qr-app--fs .qr-card--form .qr-error {
+  font-size: clamp(13px, 2.6vw, 15px);
+}
