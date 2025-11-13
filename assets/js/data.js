@@ -22,7 +22,7 @@
     },
     {
       id: "type",
-      q: "¿Qué tipo de trabajo te llama más?",
+      q: "¿Qué tipo de trabajo te llama más la atención?",
       opts: [
         "Seguridad y acción",
         "Administración / gestión",
@@ -51,7 +51,7 @@
     },
     {
       id: "maneuvers",
-      q: "¿Te interesan las maniobras y ejercicios de campaña?",
+      q: "¿Te interesan las maniobras?",
       opts: ["Sí", "Prefiero evitarlas"],
     },
     {
@@ -66,7 +66,7 @@
     },
     {
       id: "hours",
-      q: "¿Cuántas horas puedes dedicar al estudio?",
+      q: "¿Cuántas horas puedes dedicar al estudio a la semana?",
       opts: ["Menos de 10h", "10-20h", "Más de 20h"],
     },
     {
