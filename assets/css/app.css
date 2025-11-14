@@ -895,31 +895,66 @@ body {
 
 /* =================== AJUSTES EXCLUSIVOS MÓVIL =================== */
 
-@media (max-width: 1024px) and (orientation: portrait) {
-  /* Botón START: tamaño y posición en horizontal */
+/*@media (max-width: 1024px) and (orientation: portrait) {
+  Botón START: tamaño y posición en horizontal 
   :root {
     --start-width: clamp(180px, 25vw, 300px);
     --start-bottom: 5%;
   }
 
   #qr-app.qr-app--fs {
-    /* Menos padding => más área para el stage */
+    /* Menos padding => más área para el stage 
     padding: max(4px, env(safe-area-inset-top)) 4px
       calc(4px + env(safe-area-inset-bottom)) 4px;
   }
 
   .qr-stage {
-    /* Más alto en horizontal: bordes superior/inferior más separados */
-    height: 72vh; /* AJUSTA AQUÍ LA ALTURA DEL STAGE EN HORIZONTAL */
+    /* Más alto en horizontal: bordes superior/inferior más separados 
+    height: 72vh; /* AJUSTA AQUÍ LA ALTURA DEL STAGE EN HORIZONTAL 
     max-width: 100vw;
   }
 
   #qr-stage .qr-start-cta2 {
-    left: var(--start-left-landscape) !important; /* POSICIÓN X HORIZONTAL */
+    left: var(--start-left-landscape) !important; /* POSICIÓN X HORIZONTAL 
     bottom: var(
       --start-bottom-landscape
-    ) !important; /* POSICIÓN Y HORIZONTAL */
+    ) !important; /* POSICIÓN Y HORIZONTAL 
     transform: translateX(-50%) !important;
+  }
+}*/
+
+/* MÓVIL VERTICAL: controlar altura del STAGE */
+@media (max-width: 768px) and (orientation: portrait) {
+  body.is-mobile #qr-stage {
+    height: 48vh !important; /* ALTURA TOTAL DEL STAGE */
+    max-height: 70vh !important; /* por si acaso */
+    min-height: 20vh !important; /* que no se quede enano */
+  }
+}
+
+/* MÓVIL VERTICAL: cómo se ve la portada (inicio/portadaresponsive) */
+@media (max-width: 768px) and (orientation: portrait) {
+  body.is-mobile #qr-stage.qr-stage--start {
+    /* cómo rellena el stage la imagen de portada */
+    background-size: contain !important; /* o 'cover' si quieres recortar más */
+    background-position: center 0% !important; /* sube/baja la imagen */
+    background-repeat: no-repeat !important;
+    background-color: #000; /* fondo detrás por si sobra espacio */
+  }
+}
+
+/* MÓVIL VERTICAL: posición y tamaño del botón START */
+@media (max-width: 768px) and (orientation: portrait) {
+  /* Tamaño del botón en vertical */
+  :root {
+    --start-width: clamp(80px, 40vw, 120px); /* AJUSTA AQUÍ EL TAMAÑO */
+  }
+
+  /* Posición del botón SOLO en móvil vertical */
+  #qr-stage .qr-start-cta2 {
+    left: 53%; /* X -> 50% centrado. Sube/baja moviendo este valor (40%, 60%, etc.) */
+    bottom: 7%; /* Y -> altura desde el suelo. Sube/baja este valor (5%, 10%, etc.) */
+    transform: translateX(-50%);
   }
 }
 
