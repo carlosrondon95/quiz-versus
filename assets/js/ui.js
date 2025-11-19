@@ -48,8 +48,8 @@
     if (!stageEl) return;
     stageEl.classList.toggle("qr-stage--modal-open", !!on);
   }
-  function emit(name) {
-    window.dispatchEvent(new CustomEvent(name));
+  function emit(name, detail) {
+    window.dispatchEvent(new CustomEvent(name, { detail }));
   }
   function close() {
     const m = document.querySelector("#qr-stage .qr-modal");
@@ -111,7 +111,7 @@
     return window.matchMedia("(orientation: portrait)").matches;
   }
 
-  // ===== Portada: elección de imagen (portrait: portadaresponsive.jpg, resto: inicio.jpg) =====
+  // ===== Portada: elección de imagen =====
   function pickStartImageSrc() {
     if (isMobile() && isPortrait()) {
       return `${ASSETS}img/portadaresponsive.jpg`;
@@ -119,7 +119,7 @@
     return `${ASSETS}img/inicio.jpg`;
   }
 
-  // ===== Aplicar/actualizar fondo de portada vía variables CSS (no sobrescribir con inline "shorthand") =====
+  // ===== Aplicar/actualizar fondo de portada vía variables CSS =====
   let _prevStageStyle = null;
 
   function applyStartBg() {
@@ -130,7 +130,6 @@
       "--start-bg-img",
       `url("${pickStartImageSrc()}")`
     );
-    // tamaño se controla desde CSS con --start-bg-size (ver media queries)
   }
 
   function updateStartBgImageOnly() {
@@ -156,7 +155,7 @@
   function startModal(onPlay) {
     if (document.querySelector("#qr-stage .qr-modal")) return;
 
-    // Fondo de portada a todo el stage (con escala controlada por CSS)
+    // Fondo de portada
     applyStartBg();
 
     const modal = document.createElement("div");
@@ -179,7 +178,6 @@
     markStageModalOpen(true);
     emit("qr:modal:open");
 
-    // Mantener la portada correcta si rota el móvil (sin tocar estilos previos)
     const onOrient = () => updateStartBgImageOnly();
     window.addEventListener("orientationchange", onOrient);
 
@@ -187,19 +185,16 @@
       window.removeEventListener("keydown", keyHandler);
       window.removeEventListener("orientationchange", onOrient);
       close();
-      clearStartBg(); // volvemos a fondo del juego para selección/juego
+      clearStartBg();
     };
 
     async function requestFSNow() {
-      // No forzamos en escritorio; sólo si es móvil y no está en FS
       if (!isMobile()) return;
       try {
         if (!document.fullscreenElement && appEl && appEl.requestFullscreen) {
           await appEl.requestFullscreen({ navigationUI: "hide" });
         }
-      } catch (_) {
-        /* no-op */
-      }
+      } catch (_) {}
     }
 
     const start = async () => {
@@ -356,7 +351,7 @@
     card.className = "qr-card qr-card--form";
     card.innerHTML = `
       <form id="qrLeadForm" novalidate>
-        <h3 class="qr-title">📩 TUS DATOS</h3>
+        <h3 class="qr-title">TUS DATOS</h3>
         <div class="qr-form-grid">
           <div class="qr-row">
             <label for="fName">Nombre</label>
@@ -537,40 +532,235 @@
     });
   }
 
-  // ===== Final =====
+  // ================== CEREMONIA DE ASIGNACIÓN NUEVA ==================
+
+  // Normalización básica
+  function normalize(s) {
+    return String(s || "")
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036F]/g, "")
+      .trim();
+  }
+
+  // Mapeo: identificador -> logo + texto de rol
+  const ACADEMY_META = {
+    AGEADMIN: {
+      id: "AGEADMIN",
+      label: "AGE Administrativo",
+      logo: "ageadmin.png",
+      role: "FUNCIONARIO DEL ESTADO",
+    },
+    AGEAUX: {
+      id: "AGEAUX",
+      label: "AGE Auxiliar",
+      logo: "ageaux.png",
+      role: "FUNCIONARIO DEL ESTADO",
+    },
+    DOZENTY: {
+      id: "DOZENTY",
+      label: "Dozenty",
+      logo: "dozenty.png",
+      role: "PROFESOR",
+    },
+    FORVIDE: {
+      id: "FORVIDE",
+      label: "Forvide",
+      logo: "forvide.png",
+      role: "FUNCIONARIO PRISIONES",
+    },
+    PREFORTIA: {
+      id: "PREFORTIA",
+      label: "Prefortia",
+      logo: "prefortia.png",
+      role: "GUARDIA CIVIL",
+    },
+    METODOS: {
+      id: "METODOS",
+      label: "Métodos",
+      logo: "metodos.png",
+      role: "MILITAR",
+    },
+    JURISPOLEB: {
+      id: "JURISPOLEB",
+      label: "JURISPOL (EB)",
+      logo: "jurispoleb.png",
+      role: "POLICÍA NACIONAL",
+    },
+    JURISPOLEE: {
+      id: "JURISPOLEE",
+      label: "JURISPOL (EE)",
+      logo: "jurispolee.png",
+      role: "POLICÍA NACIONAL",
+    },
+  };
+
+  // Detecta meta a partir del texto “decorado” que manda game.js (p.ej. "JURISPOL – Escala Ejecutiva", "AGE360 – Auxiliar")
+  function metaFromDecorated(label) {
+    const t = normalize(label);
+
+    // AGE360 → distinguir rama
+    if (t.includes("AGE360")) {
+      if (t.includes("AUXILIAR")) return ACADEMY_META.AGEAUX;
+      return ACADEMY_META.AGEADMIN; // por defecto Administrativo si no indica Auxiliar
+    }
+
+    // JURISPOL → distinguir escala
+    if (t.includes("JURISPOL")) {
+      if (t.includes("EJECUTIVA")) return ACADEMY_META.JURISPOLEE;
+      return ACADEMY_META.JURISPOLEB; // por defecto Básica si no indica Ejecutiva
+    }
+
+    // Resto directos
+    if (t.includes("PREFORTIA")) return ACADEMY_META.PREFORTIA;
+    if (t.includes("FORVIDE")) return ACADEMY_META.FORVIDE;
+    if (t.includes("METODOS") || t.includes("MÉTODOS"))
+      return ACADEMY_META.METODOS;
+    if (t.includes("DOZENTY")) return ACADEMY_META.DOZENTY;
+
+    // Fallback genérico (sin logo/rol)
+    return { id: t, label: label || "Academia", logo: null, role: "" };
+  }
+
+  // Extrae ganadores de distintos formatos
+  function extractWinners(result) {
+    if (!result) return [];
+    if (Array.isArray(result)) return result.slice(0, 2);
+    if (result.main || result.secondary)
+      return [result.main, result.secondary].filter(Boolean);
+    if (result.primary || result.secondary)
+      return [result.primary, result.secondary].filter(Boolean);
+    if (result.first || result.second)
+      return [result.first, result.second].filter(Boolean);
+    if (result.top2 && Array.isArray(result.top2))
+      return result.top2.slice(0, 2);
+    if (result.best && Array.isArray(result.best))
+      return result.best.slice(0, 2);
+    if (result.winner) return [result.winner];
+    if (result.academy) return [result.academy];
+    if (result.top1 || result.top2)
+      return [result.top1, result.top2].filter(Boolean);
+    return [];
+  }
+
+  // Esperar a que carguen imágenes del card y refitear
+  function refitOnImages(card) {
+    if (!card) return;
+    const imgs = Array.from(card.querySelectorAll("img"));
+    if (!imgs.length) {
+      fitCardToStage(card, 0.85);
+      return;
+    }
+    let pending = imgs.length;
+    const done = () => {
+      pending--;
+      if (pending <= 0) fitCardToStage(card, 0.85);
+    };
+    imgs.forEach((img) => {
+      if (img.complete && img.naturalWidth) {
+        // ya cargada
+        pending--;
+      } else {
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      }
+    });
+    // refit inicial y de seguridad
+    fitCardToStage(card, 0.85);
+    setTimeout(() => fitCardToStage(card, 0.85), 120);
+  }
+
+  // Ceremonia
   function endingModal(result, onRestart) {
-    const { top1, top2, bullets } = result;
-    if (document.querySelector("#qr-stage .qr-modal")) return;
+    if (!root) return;
+
+    const winnersRaw = extractWinners(result);
+    const mainMeta = metaFromDecorated(winnersRaw[0]);
+    const secondMeta = winnersRaw[1] ? metaFromDecorated(winnersRaw[1]) : null;
+    const hasSecond = !!(secondMeta && secondMeta.logo);
+
+    const CUP_SRC = `${ASSETS}img/copa.png`;
+    const LOGO_BASE = `${ASSETS}img/logos/`;
+    const RESTART_SRC = `${ASSETS}img/buttons/restart.png`;
+
+    // Bloque central: logos + copas
+    let centerHtml = "";
+    if (mainMeta && mainMeta.logo && !hasSecond) {
+      // Una sola academia: logo en centro + dos copas
+      centerHtml = `
+        <div class="qr-ceremony-main qr-ceremony-main--single">
+          <img src="${CUP_SRC}" alt="Copa" class="qr-ceremony-cup" />
+          <img src="${LOGO_BASE + mainMeta.logo}" alt="${
+        mainMeta.label
+      }" class="qr-ceremony-logo" />
+          <img src="${CUP_SRC}" alt="Copa" class="qr-ceremony-cup" />
+        </div>
+      `;
+    } else if (mainMeta && mainMeta.logo && hasSecond) {
+      // Dos academias: copa medio; main izq, second dcha
+      centerHtml = `
+        <div class="qr-ceremony-main qr-ceremony-main--double">
+          <img src="${LOGO_BASE + mainMeta.logo}" alt="${
+        mainMeta.label
+      }" class="qr-ceremony-logo" />
+          <img src="${CUP_SRC}" alt="Copa" class="qr-ceremony-cup" />
+          <img src="${LOGO_BASE + secondMeta.logo}" alt="${
+        secondMeta.label
+      }" class="qr-ceremony-logo" />
+        </div>
+      `;
+    } else {
+      // Fallback
+      centerHtml = `
+        <div class="qr-ceremony-main">
+          <img src="${CUP_SRC}" alt="Copa" class="qr-ceremony-cup" />
+        </div>
+      `;
+    }
+
+    // Roles (estilo del título, apilados)
+    const rolesHtml = `
+      <div class="qr-ceremony-roles">
+        ${
+          mainMeta && mainMeta.role
+            ? `<div class="qr-ceremony-role">${mainMeta.role}</div>`
+            : ""
+        }
+        ${
+          hasSecond && secondMeta.role
+            ? `<div class="qr-ceremony-role">${secondMeta.role}</div>`
+            : ""
+        }
+      </div>
+    `;
+
+    // Limpiar y montar
+    markStageModalOpen(true);
+    root.innerHTML = "";
 
     const modal = document.createElement("div");
-    modal.className = "qr-modal";
+    modal.className = "qr-modal"; // velo estándar
 
     const card = document.createElement("div");
-    card.className = "qr-card qr-end";
+    card.className = "qr-card qr-card--ceremony";
     card.innerHTML = `
-      <h3 class="qr-title">🎖 Ceremonia de Asignación</h3>
-      <p class="qr-end-lead"><strong>Tu perfil ideal:</strong> ${top1}</p>
-      <div class="qr-end-badges">
-        <div class="qr-badge">${top1}</div>
-        ${top2 ? `<div class="qr-badge">También encajas en: ${top2}</div>` : ""}
-      </div>
-      <ul class="qr-end-list">
-        ${bullets.map((b) => `<li>${b}</li>`).join("")}
-      </ul>
-      <div class="qr-end-actions">
-        <button class="qr-btn" id="btnRestart" type="button">Reiniciar</button>
+      <h2 class="qr-ceremony-title">CEREMONIA DE ASIGNACIÓN</h2>
+      ${centerHtml}
+      ${rolesHtml}
+      <div class="qr-ceremony-actions">
+        <button type="button" class="qr-ceremony-restart" aria-label="Reiniciar">
+          <img src="${RESTART_SRC}" alt="Volver a jugar" />
+        </button>
       </div>
     `;
 
     modal.appendChild(card);
-    (document.querySelector("#qr-stage #qr-modal-root") || root).appendChild(
-      modal
-    );
-    markStageModalOpen(true);
+    root.appendChild(modal);
     emit("qr:modal:open");
 
+    // Refit responsive (y al cargar imágenes)
     const refit = () => requestAnimationFrame(() => fitCardToStage(card, 0.85));
-    refit();
+    refitOnImages(card);
     window.addEventListener("resize", refit);
     window.addEventListener("orientationchange", refit);
     window.addEventListener("qr:viewport:change", refit);
@@ -584,9 +774,29 @@
       { once: true }
     );
 
-    const btnRestart = document.getElementById("btnRestart");
-    if (btnRestart) btnRestart.addEventListener("click", onRestart);
+    // Restart funcional:
+    const restartBtn = card.querySelector(".qr-ceremony-restart");
+    if (restartBtn) {
+      restartBtn.addEventListener("click", () => {
+        // Cerrar modal, liberar flag y ejecutar callback si existe
+        close();
+        markStageModalOpen(false);
+        emit("qr-restart"); // por compatibilidad
+        if (typeof onRestart === "function") {
+          try {
+            onRestart();
+          } catch (e) {
+            location.reload();
+          }
+        } else {
+          location.reload();
+        }
+      });
+    }
+
+    return modal;
   }
+  // ================== FIN CEREMONIA ==================
 
   window.QRUI = {
     startModal,
