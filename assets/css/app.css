@@ -744,16 +744,20 @@ body {
   background: rgba(0, 0, 0, 0.95);
   padding-bottom: calc(8px + env(safe-area-inset-bottom));
 }
-.qr-pad--landscape .qr-pad__left {
-  position: fixed;
-  left: 16px;
-  bottom: calc(24px + env(safe-area-inset-bottom));
-}
+.qr-pad--landscape .qr-pad__left,
 .qr-pad--landscape .qr-pad__right {
   position: fixed;
-  right: 16px;
-  bottom: calc(24px + env(safe-area-inset-bottom));
+  bottom: calc(56px + env(safe-area-inset-bottom));
 }
+
+.qr-pad--landscape .qr-pad__left {
+  left: 16px;
+}
+
+.qr-pad--landscape .qr-pad__right {
+  right: 16px;
+}
+
 .qr-pad--landscape .qr-pad__btn {
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
@@ -1002,9 +1006,9 @@ body {
     --start-width: clamp(80px, 40vw, 120px);
   }
   #qr-stage .qr-start-cta2 {
-    left: 53%;
+    left: 55%;
     bottom: 7%;
-    transform: translateX(-50%);
+    /*transform: translateX(-50%);*/
   }
 }
 
@@ -1013,72 +1017,84 @@ body {
   :root {
     --start-width: clamp(80px, 25vw, 110px);
   }
+
   #qr-app {
     max-width: 100vw;
     padding-left: 8px;
     padding-right: 8px;
   }
+
+  /* El stage ocupa 72vh y recorta todo lo que se salga */
   #qr-stage {
     width: 100%;
     max-width: 100%;
     height: 72vh;
     margin: 0 auto;
-  }
-  /* START en landscape móvil: centrado similar a portrait */
-  body.is-mobile #qr-stage .qr-start-cta2 {
-    left: 53%;
-    bottom: 6%;
-    transform: translateX(-50%);
+    overflow: hidden;
   }
 
-  /* Preguntas un poco más grandes (subidón ligero) */
-  .qr-card--question .qr-q {
-    font-size: clamp(14px, 1.8vw, 17px) !important;
-    line-height: 1.2 !important;
+  /* 🔥 Canvas estirado a todo el alto del stage en horizontal */
+  #qr-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
   }
-  .qr-card--question .qr-opt {
-    font-size: clamp(11px, 1.6vw, 13px) !important;
-    padding: 8px 10px !important;
-  }
+}
 
-  /* TUS DATOS: tarjeta más compacta y desbloqueada */
-  .qr-card--form {
-    margin: 0 auto;
-    width: min(440px, 84vw) !important;
-    max-height: none !important;
-    overflow: visible !important;
-    padding: 10px 12px !important;
-  }
-  .qr-card--form .qr-title {
-    font-size: clamp(14px, 1.8vw, 16px) !important;
-    margin-bottom: 8px;
-  }
-  .qr-card--form label {
-    font-size: clamp(12px, 1.5vw, 14px) !important;
-  }
-  .qr-card--form .qr-row {
-    margin: 4px 0;
-  }
-  .qr-card--form .qr-input {
-    padding: 8px 10px;
-    font-size: clamp(12px, 1.5vw, 14px) !important;
-  }
-  .qr-card--form .qr-consent {
-    font-size: clamp(12px, 1.5vw, 14px) !important;
-    gap: 8px;
-  }
-  .qr-card--form .qr-consent input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    transform: translateY(1px);
-  }
+/* START en landscape móvil: centrado similar a portrait */
+body.is-mobile #qr-stage .qr-start-cta2 {
+  left: 53%;
+  bottom: 6%;
+  /*transform: translateX(-50%);*/
+}
 
-  /* SEND = mismo tamaño y brillo que RESTART */
-  .qr-card--form .qr-btn--img__icon {
-    width: clamp(88px, 15vw, 132px) !important;
-    height: auto !important;
-    animation: qr-colorPulse 1.25s ease-in-out infinite alternate;
-  }
+/* Preguntas un poco más grandes (subidón ligero) */
+.qr-card--question .qr-q {
+  font-size: clamp(14px, 1.8vw, 17px) !important;
+  line-height: 1.2 !important;
+}
+.qr-card--question .qr-opt {
+  font-size: clamp(11px, 1.6vw, 13px) !important;
+  padding: 8px 10px !important;
+}
+
+/* TUS DATOS: tarjeta más compacta y desbloqueada */
+.qr-card--form {
+  margin: 0 auto;
+  width: min(440px, 84vw) !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 10px 12px !important;
+}
+.qr-card--form .qr-title {
+  font-size: clamp(14px, 1.8vw, 16px) !important;
+  margin-bottom: 8px;
+}
+.qr-card--form label {
+  font-size: clamp(12px, 1.5vw, 14px) !important;
+}
+.qr-card--form .qr-row {
+  margin: 4px 0;
+}
+.qr-card--form .qr-input {
+  padding: 8px 10px;
+  font-size: clamp(12px, 1.5vw, 14px) !important;
+}
+.qr-card--form .qr-consent {
+  font-size: clamp(12px, 1.5vw, 14px) !important;
+  gap: 8px;
+}
+.qr-card--form .qr-consent input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  transform: translateY(1px);
+}
+
+/* SEND = mismo tamaño y brillo que RESTART */
+.qr-card--form .qr-btn--img__icon {
+  width: clamp(88px, 15vw, 132px) !important;
+  height: auto !important;
+  animation: qr-colorPulse 1.25s ease-in-out infinite alternate;
 }
 
 /* ► Brillo en SEND (extra por si el botón fuera <button> y no imagen) */
