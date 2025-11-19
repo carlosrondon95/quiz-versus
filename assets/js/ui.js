@@ -195,17 +195,13 @@
     const onOrient = () => updateStartBgImageOnly();
     window.addEventListener("orientationchange", onOrient);
 
+    let keyHandler;
+
     const cleanup = () => {
-      window.removeEventListener("keydown", keyHandler);
+      if (keyHandler) window.removeEventListener("keydown", keyHandler);
       window.removeEventListener("orientationchange", onOrient);
       close();
-      clearStartBg();
-      // Al salir de portada, aseguramos fondo de juego = fondo.png
-      try {
-        if (stageEl)
-          stageEl.style.background =
-            'url("' + ASSETS + 'img/fondo.jpg") center / cover no-repeat, #000';
-      } catch (_) {}
+      clearStartBg(); // vuelve al fondo definido en el CSS (.qr-stage)
     };
 
     async function requestFSNow() {
@@ -219,11 +215,11 @@
 
     const start = async () => {
       await requestFSNow();
-      cleanup();
-      onPlay && onPlay();
+      cleanup(); // 1) cerramos portada y restauramos fondo
+      onPlay && onPlay(); // 2) luego disparamos el callback (selección de personaje, etc.)
     };
 
-    const keyHandler = (e) => {
+    keyHandler = (e) => {
       const k = (e.key || "").toLowerCase();
       if (k === "enter" || k === " ") {
         e.preventDefault();
@@ -270,28 +266,17 @@
     markStageModalOpen(true);
     emit("qr:modal:open");
 
-    // ► Fondo selección SIEMPRE fondo.png (escritorio y móvil)
-    try {
-      if (stageEl) {
-        stageEl.classList.add("qr-stage--select");
-        stageEl.style.background =
-          'url("' + ASSETS + 'img/fondo.jpg") center / cover no-repeat, #000';
-      }
-    } catch (_) {}
+    // Marcamos el estado de selección y dejamos que el CSS pinte fondo.jpg
+    if (stageEl) {
+      stageEl.classList.add("qr-stage--select");
+    }
 
     window.addEventListener(
       "qr:modal:close",
       () => {
-        try {
-          if (stageEl) {
-            stageEl.classList.remove("qr-stage--select");
-            // al cerrar selección dejamos el mismo fondo del juego
-            stageEl.style.background =
-              'url("' +
-              ASSETS +
-              'img/fondo.jpg") center / cover no-repeat, #000';
-          }
-        } catch (_) {}
+        if (stageEl) {
+          stageEl.classList.remove("qr-stage--select");
+        }
       },
       { once: true }
     );
@@ -315,13 +300,14 @@
 
     const pick = (g) => {
       if (window.QRAudio) window.QRAudio.playAnswer();
-      close();
-      try {
-        if (stageEl)
-          stageEl.style.background =
-            'url("' + ASSETS + 'img/fondo.jpg") center / cover no-repeat, #000';
-      } catch (_) {}
-      onSelect && onSelect(g);
+
+      // Primero avisamos al motor del juego (elige personaje / prepara canvas)
+      if (onSelect) onSelect(g);
+
+      // Cerramos el modal en el siguiente frame → el canvas ya está pintado y no hay pantallazo negro
+      requestAnimationFrame(() => {
+        close();
+      });
     };
 
     card
@@ -781,7 +767,6 @@
         </div>
       `;
     } else if (ac1) {
-      // fallback a una sola si algo raro pasa
       mainHtml = `
         <div class="${mainClass}">
           ${academyBlock(ac1, top1 || ac1.label, bullets1, "")}

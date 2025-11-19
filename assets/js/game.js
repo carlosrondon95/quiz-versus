@@ -15,7 +15,7 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const rand = (min, max) => Math.random() * (max - min) + min;
 
-  // 🧱 Config fáciles de tocar
+  // 
   const WALL_GAP = 1200; // distancia de las murallas respecto a Puerta 1 / Trofeo
   const TOWER_BLOCKS = 14; // altura (en bloques) de las murallas verticales
 
@@ -35,7 +35,7 @@
       this.groundY = this.H - 64;
       this.footY = this.groundY - 8;
 
-      // 🔢 Ahora el número de estaciones viene de las preguntas (11 puertas + 1 trofeo = 12)
+      // El número de estaciones viene de las preguntas (11 puertas + 1 trofeo = 12)
       this.stations =
         window.QRData && Array.isArray(window.QRData.QUESTIONS)
           ? window.QRData.QUESTIONS.length
@@ -82,7 +82,7 @@
       this.flyers = [];
       this.flyTimer = 0;
 
-      // 🔒 Bloqueo temporal de input para evitar salto tras cerrar modal
+      // Bloqueo temporal de input para evitar salto tras cerrar modal
       this.inputLockUntil = 0;
 
       this.loop = createLoop(this.update.bind(this), this.render.bind(this));
@@ -96,7 +96,7 @@
           code === "ArrowDown" ||
           e.key === " ";
 
-        // ✅ Evita scroll SIEMPRE que no estés escribiendo, aunque haya modal
+        // Evita scroll SIEMPRE que no estés escribiendo, aunque haya modal
         if (isScrollKey && !this.isTypingTarget(e.target)) e.preventDefault();
 
         // Si hay modal o input bloqueado, no procesamos acciones del juego
@@ -174,7 +174,7 @@
       const baseW = Math.max(16, Math.round(img.width * scaleBase));
       const stepW = Math.max(16, Math.round(img.width * scaleStep));
 
-      // Obstáculos normales entre puertas (aleatorios)
+      // Obstáculos entre puertas (aleatorios)
       for (let i = 0; i < this.stations - 1; i++) {
         if (i === 0 && Math.random() < 0.4) continue;
         if (Math.random() < 0.7) {
@@ -203,7 +203,7 @@
         }
       }
 
-      // 🚧 Murallas verticales (mucho más altas y más lejos)
+      // Murallas verticales
       const leftX = this.portalX[0] - WALL_GAP;
       const rightX = this.portalX[this.stations - 1] + WALL_GAP;
 
@@ -220,8 +220,8 @@
       pushVerticalTower(leftX);
       pushVerticalTower(rightX);
 
-      // ⛔ Define límites duros del mundo alineados con las murallas
-      this.worldMinX = leftX; // el centro del héroe no puede pasar de aquí
+      // Define límites del mundo alineados con las murallas
+      this.worldMinX = leftX; // el héroe no puede pasar de aquí
       this.worldMaxX = rightX;
 
       return list;
