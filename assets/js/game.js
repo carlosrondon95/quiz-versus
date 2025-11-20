@@ -435,6 +435,12 @@
         }
 
         if (qObj.id === "form") {
+          // Calculamos los ganadores UNA vez aquí
+          const win = winner(this.score);
+          // Enviamos exactamente lo que devuelve winner(), sin puntos, sin prefijos raros
+          const academy1 = win.top1 || "";
+          const academy2 = win.top2 || "";
+
           formModal(async ({ name, email, phone, consent }) => {
             try {
               const payload = new URLSearchParams();
@@ -445,6 +451,10 @@
               payload.append("phone", phone);
               payload.append("consent", consent);
               payload.append("answers", JSON.stringify(this.answers));
+
+              // 🔹 Aquí es donde mandamos academias al PHP, SIN "JURISPOL:" ni "AGE:"
+              payload.append("academy1", academy1);
+              payload.append("academy2", academy2);
 
               const r = await fetch(qrAjax.ajax_url, {
                 method: "POST",
@@ -465,7 +475,7 @@
                 const msg =
                   data && data.data && data.data.message
                     ? data.data.message
-                    : "No se pudo enviar el correo.";
+                    : "No se pudo registrar el lead.";
                 alert(msg);
                 this.start();
                 return;
@@ -479,6 +489,7 @@
               this.start();
             }
           });
+
           return;
         }
 

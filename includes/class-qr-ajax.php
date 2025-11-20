@@ -30,11 +30,19 @@ class QR_Ajax
     $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
     $phone = isset($_POST['phone']) ? sanitize_text_field(wp_unslash($_POST['phone'])) : '';
     $consent = (isset($_POST['consent']) && $_POST['consent'] === '1') ? 'Sí' : 'No';
+
+    // Respuestas completas (por si en el futuro se quieren usar)
     $answers_json = isset($_POST['answers']) ? wp_unslash($_POST['answers']) : '[]';
     $answers = json_decode($answers_json, true);
-    if (!is_array($answers))
+    if (!is_array($answers)) {
       $answers = [];
+    }
 
+    // Academias calculadas en el front
+    $academy1 = isset($_POST['academy1']) ? sanitize_text_field(wp_unslash($_POST['academy1'])) : '';
+    $academy2 = isset($_POST['academy2']) ? sanitize_text_field(wp_unslash($_POST['academy2'])) : '';
+
+    // Validaciones básicas
     if (empty($name) || empty($email) || !is_email($email)) {
       wp_send_json_error(['message' => 'Revisa nombre y email.'], 422);
     }
@@ -42,54 +50,40 @@ class QR_Ajax
       wp_send_json_error(['message' => 'Debes aceptar la política de privacidad.'], 422);
     }
 
-    // Construir cuerpo del correo
-    $lines = [];
-    $lines[] = "Nuevo lead Pixel Path";
-    $lines[] = "---------------------";
-    $lines[] = "Nombre: {$name}";
-    $lines[] = "Email: {$email}";
-    $lines[] = "Teléfono: {$phone}";
-    $lines[] = "Consentimiento: {$consent}";
-    $lines[] = "";
-    $lines[] = "Respuestas:";
-    foreach ($answers as $i => $it) {
-      $q = isset($it['q']) ? sanitize_text_field($it['q']) : 'Pregunta ' . ($i + 1);
-      $a = isset($it['value']) ? sanitize_text_field($it['value']) : '';
-      $lines[] = " - {$q}: {$a}";
-    }
-    $body = implode("\n", $lines);
-
-    // Destino: tu correo; si no es válido, usar admin_email
-    $to = 'crondon@grupoprefor.es';
-    if (!is_email($to)) {
-      $to = get_option('admin_email');
+    // === Guardado en CSV (Excel) ===
+    $upload_dir = wp_upload_dir();
+    if (!empty($upload_dir['error'])) {
+      wp_send_json_error(['message' => 'No se pudo acceder al directorio de subidas.'], 500);
     }
 
-    // Cabeceras correctas: From (dominio del sitio) + Reply-To (usuario)
-    $host = parse_url(home_url(), PHP_URL_HOST);
-    if (!$host) {
-      $host = $_SERVER['HTTP_HOST'] ?? 'example.com';
+    $dir = trailingslashit($upload_dir['basedir']) . 'mision-futuro/';
+    if (!wp_mkdir_p($dir)) {
+      wp_send_json_error(['message' => 'No se pudo crear el directorio de leads.'], 500);
     }
-    $from = 'noreply@' . $host;
 
-    $subject = 'Nuevo lead - Quiz Versus';
-    $headers = [
-      'Content-Type: text/plain; charset=UTF-8',
-      'From: Quiz Versus <' . $from . '>',
-      'Reply-To: ' . $name . ' <' . $email . '>',
-    ];
+    $file = $dir . 'mision-futuro-leads.csv';
+    $is_new = !file_exists($file);
 
-    // Enviar
-    $sent = wp_mail($to, $subject, $body, $headers);
-
-    if ($sent) {
-      wp_send_json_success(['message' => '¡Gracias! Te contactaremos pronto.']);
-    } else {
-      // Deja un rastro en debug.log si WP_DEBUG_LOG está activo
-      if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-        error_log('[Quiz Runner] wp_mail() falló. Destino: ' . $to . ' | From: ' . $from . ' | Reply-To: ' . $email);
-      }
-      wp_send_json_error(['message' => 'No se pudo enviar el correo. Revisa la configuración de email del sitio.'], 500);
+    $fh = @fopen($file, 'a');
+    if (!$fh) {
+      wp_send_json_error(['message' => 'No se pudo escribir el fichero de leads.'], 500);
     }
+
+    if ($is_new) {
+      fwrite($fh, "\xEF\xBB\xBF");
+
+      $header = ['NOMBRE', 'TELEFONO', 'MAIL', 'ACADEMIA 1', 'ACADEMIA 2', 'FECHA'];
+      fputcsv($fh, $header, ';');
+    }
+
+    // Fecha del día (según zona horaria de WordPress)
+    $fecha = current_time('Y-m-d');
+
+    $row = [$name, $phone, $email, $academy1, $academy2, $fecha];
+    fputcsv($fh, $row, ';');
+
+    fclose($fh);
+
+    wp_send_json_success(['message' => '¡Gracias! Tus datos se han registrado correctamente.']);
   }
 }
