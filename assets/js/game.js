@@ -85,6 +85,12 @@
       // 🔒 Bloqueo temporal de input para evitar salto tras cerrar modal
       this.inputLockUntil = 0;
 
+      // ✅ FIX: limpiar fondo estático del stage durante gameplay
+      this.stageEl = document.getElementById("qr-stage");
+      this._savedStageBg = null;
+      this._savedStageBgColor = null;
+      this._stageBgCleared = false;
+
       this.loop = createLoop(this.update.bind(this), this.render.bind(this));
 
       this.onKeyDown = (e) => {
@@ -113,6 +119,38 @@
       window.dispatchEvent(
         new CustomEvent("qr:station", { detail: { index: 0 } })
       );
+    }
+
+    // === FIX fondo stage ===
+    clearStageBgForPlay() {
+      if (this._stageBgCleared || !this.stageEl) return;
+      // guardamos inline por si había algo set
+      this._savedStageBg = this.stageEl.style.backgroundImage;
+      this._savedStageBgColor = this.stageEl.style.backgroundColor;
+
+      // anulamos cualquier background CSS estático
+      this.stageEl.style.backgroundImage = "none";
+      this.stageEl.style.backgroundColor = "transparent";
+
+      this._stageBgCleared = true;
+    }
+
+    restoreStageBg() {
+      if (!this._stageBgCleared || !this.stageEl) return;
+
+      if (this._savedStageBg !== null) {
+        this.stageEl.style.backgroundImage = this._savedStageBg;
+      } else {
+        this.stageEl.style.removeProperty("background-image");
+      }
+
+      if (this._savedStageBgColor !== null) {
+        this.stageEl.style.backgroundColor = this._savedStageBgColor;
+      } else {
+        this.stageEl.style.removeProperty("background-color");
+      }
+
+      this._stageBgCleared = false;
     }
 
     // === Utilidades input lock ===
@@ -153,6 +191,8 @@
     }
 
     start() {
+      // ✅ al arrancar gameplay quitamos el fondo estático del stage
+      this.clearStageBgForPlay();
       this.loop.start();
     }
     stop() {
@@ -571,6 +611,9 @@
     }
 
     finish() {
+      // ✅ restauramos fondo del stage para la ceremonia / final
+      this.restoreStageBg();
+
       const win = winner(this.score);
       endingModal(
         { top1: win.top1, top2: win.top2, bullets: bullets(win.top1) },
