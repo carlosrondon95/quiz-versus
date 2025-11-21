@@ -151,40 +151,48 @@
     }
   }
 
-  // ===== Pantalla de inicio =====
+  // ===== Pantalla de inicio (NUEVO CONTENEDOR, SIN MODAL) =====
   function startModal(onPlay) {
+    // Si ya hay capa de inicio, no duplicar
+    if (document.getElementById("qr-start-layer")) return;
+    // Si hubiese un modal abierto, tampoco
     if (document.querySelector("#qr-stage .qr-modal")) return;
 
-    // Fondo de portada
     applyStartBg();
 
-    const modal = document.createElement("div");
-    modal.className = "qr-modal qr-modal--start";
+    // Forzamos el estado "modal" del stage para que se vea bien en móvil (altura, etc.)
+    markStageModalOpen(true);
 
-    const card = document.createElement("div");
-    card.className = "qr-card qr-card--start";
-    card.innerHTML = `
-      <div class="qr-start-cta2">
-        <button class="qr-start-btn2" id="qrStartBtn" type="button" aria-label="Jugar">
-          <img src="${ASSETS}img/buttons/start.png" alt="Jugar" class="qr-start-btn2__icon" />
-        </button>
+    const layer = document.createElement("div");
+    layer.id = "qr-start-layer";
+    layer.className = "qr-start-layer";
+    layer.innerHTML = `
+      <div class="qr-card qr-card--start">
+        <div class="qr-start-cta2">
+          <button class="qr-start-btn2" id="qrStartBtn" type="button" aria-label="Jugar">
+            <img src="${ASSETS}img/buttons/start.png" alt="Jugar" class="qr-start-btn2__icon" />
+          </button>
+        </div>
       </div>
     `;
 
-    modal.appendChild(card);
-    (document.querySelector("#qr-stage #qr-modal-root") || root).appendChild(
-      modal
-    );
-    markStageModalOpen(true);
-    emit("qr:modal:open");
+    if (stageEl) stageEl.appendChild(layer);
 
     const onOrient = () => updateStartBgImageOnly();
     window.addEventListener("orientationchange", onOrient);
 
+    let keyHandler;
+
     const cleanup = () => {
-      window.removeEventListener("keydown", keyHandler);
+      if (keyHandler) window.removeEventListener("keydown", keyHandler);
       window.removeEventListener("orientationchange", onOrient);
-      close();
+
+      const existing = document.getElementById("qr-start-layer");
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+
+      markStageModalOpen(false);
       clearStartBg();
     };
 
@@ -203,7 +211,7 @@
       onPlay && onPlay();
     };
 
-    const keyHandler = (e) => {
+    keyHandler = (e) => {
       const k = (e.key || "").toLowerCase();
       if (k === "enter" || k === " ") {
         e.preventDefault();
@@ -211,7 +219,7 @@
       }
     };
 
-    const btn = card.querySelector("#qrStartBtn");
+    const btn = layer.querySelector("#qrStartBtn");
     if (btn) btn.addEventListener("click", start);
     window.addEventListener("keydown", keyHandler);
   }
@@ -658,14 +666,12 @@
     };
     imgs.forEach((img) => {
       if (img.complete && img.naturalWidth) {
-        // ya cargada
         pending--;
       } else {
         img.addEventListener("load", done, { once: true });
         img.addEventListener("error", done, { once: true });
       }
     });
-    // refit inicial y de seguridad
     fitCardToStage(card, 0.85);
     setTimeout(() => fitCardToStage(card, 0.85), 120);
   }
@@ -675,7 +681,7 @@
     if (!root) return;
 
     const winnersRaw = extractWinners(result);
-    const mainMeta = metaFromDecorated(winnersRaw[0]);
+    const mainMeta = winnersRaw[0] ? metaFromDecorated(winnersRaw[0]) : null;
     const secondMeta = winnersRaw[1] ? metaFromDecorated(winnersRaw[1]) : null;
     const hasSecond = !!(secondMeta && secondMeta.logo);
 
@@ -683,10 +689,8 @@
     const LOGO_BASE = `${ASSETS}img/logos/`;
     const RESTART_SRC = `${ASSETS}img/buttons/restart.png`;
 
-    // Bloque central: logos + copas
     let centerHtml = "";
     if (mainMeta && mainMeta.logo && !hasSecond) {
-      // Una sola academia: logo en centro + dos copas
       centerHtml = `
         <div class="qr-ceremony-main qr-ceremony-main--single">
           <img src="${CUP_SRC}" alt="Copa" class="qr-ceremony-cup" />
@@ -697,7 +701,6 @@
         </div>
       `;
     } else if (mainMeta && mainMeta.logo && hasSecond) {
-      // Dos academias: copa medio; main izq, second dcha
       centerHtml = `
         <div class="qr-ceremony-main qr-ceremony-main--double">
           <img src="${LOGO_BASE + mainMeta.logo}" alt="${
@@ -710,7 +713,6 @@
         </div>
       `;
     } else {
-      // Fallback
       centerHtml = `
         <div class="qr-ceremony-main">
           <img src="${CUP_SRC}" alt="Copa" class="qr-ceremony-cup" />
@@ -718,7 +720,6 @@
       `;
     }
 
-    // Roles (estilo del título, apilados)
     const rolesHtml = `
       <div class="qr-ceremony-roles">
         ${
@@ -734,12 +735,11 @@
       </div>
     `;
 
-    // Limpiar y montar
     markStageModalOpen(true);
     root.innerHTML = "";
 
     const modal = document.createElement("div");
-    modal.className = "qr-modal"; // velo estándar
+    modal.className = "qr-modal";
 
     const card = document.createElement("div");
     card.className = "qr-card qr-card--ceremony";
@@ -758,7 +758,6 @@
     root.appendChild(modal);
     emit("qr:modal:open");
 
-    // Refit responsive (y al cargar imágenes)
     const refit = () => requestAnimationFrame(() => fitCardToStage(card, 0.85));
     refitOnImages(card);
     window.addEventListener("resize", refit);
@@ -774,14 +773,12 @@
       { once: true }
     );
 
-    // Restart funcional:
     const restartBtn = card.querySelector(".qr-ceremony-restart");
     if (restartBtn) {
       restartBtn.addEventListener("click", () => {
-        // Cerrar modal, liberar flag y ejecutar callback si existe
         close();
         markStageModalOpen(false);
-        emit("qr-restart"); // por compatibilidad
+        emit("qr-restart");
         if (typeof onRestart === "function") {
           try {
             onRestart();
