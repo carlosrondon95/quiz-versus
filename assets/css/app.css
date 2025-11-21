@@ -386,15 +386,28 @@ body {
   box-shadow: 0 0 0 1000px #ffed00 inset !important;
   border: 4px solid #e71d73 !important;
 }
+
+/* Consentimiento – layout compatible con Elementor */
 .qr-card--form .qr-consent {
   font-size: 16px;
-  gap: 10px;
+  gap: 8px;
+  align-items: flex-start;
 }
-.qr-card--form .qr-consent input[type="checkbox"] {
-  width: 22px;
-  height: 22px;
-  transform: translateY(2px);
+.qr-card--form .qr-consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
+.qr-card--form .qr-consent-checkbox {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  appearance: auto !important;
+  -webkit-appearance: checkbox !important;
+  accent-color: #e71d73;
+}
+
 .qr-link,
 .qr-link:visited {
   color: #1976d2;
@@ -674,7 +687,6 @@ body {
     max-height: 88vh;
   }
 
-  /* Título y textos un poco más grandes */
   .qr-ceremony-title {
     font-size: clamp(16px, 3.6vw, 22px);
   }
@@ -693,7 +705,6 @@ body {
     max-height: 90px;
   }
 
-  /* RESTART un poco más pequeño */
   .qr-ceremony-restart img {
     width: clamp(76px, 13vw, 110px) !important;
     height: auto !important;
@@ -748,7 +759,7 @@ body {
   color: #fff;
 }
 .qr-pad--landscape {
-  background: transparent; /* sin franja en horizontal */
+  background: transparent;
 }
 .qr-pad--portrait {
   display: flex;
@@ -1015,7 +1026,7 @@ body {
   }
 }
 
-/* START en portrait móvil: más pequeño y algo más arriba (vía variable) */
+/* START en portrait móvil */
 @media (max-width: 768px) and (orientation: portrait) {
   :root {
     --start-width: clamp(80px, 40vw, 120px);
@@ -1025,11 +1036,8 @@ body {
 
 /* ====== HORIZONTAL (LANDSCAPE) ====== */
 @media (max-width: 1024px) and (orientation: landscape) {
-  /* Móvil horizontal: botón un poco más abajo y tamaño ligado a la altura del stage */
   :root {
-    /* Tamaño base escalado por la altura (72vh del stage) */
     --start-width: clamp(80px, 18vh, 110px);
-    /* Menos padding inferior → más pegado al borde inferior del stage */
     --start-bottom: 3%;
   }
 
@@ -1039,7 +1047,6 @@ body {
     padding-right: 8px;
   }
 
-  /* El stage ocupa 72vh y recorta todo lo que se salga */
   #qr-stage {
     width: 100%;
     max-width: 100%;
@@ -1048,7 +1055,6 @@ body {
     overflow: hidden;
   }
 
-  /* Canvas estirado a todo el alto del stage en horizontal */
   #qr-canvas {
     width: 100% !important;
     height: 100% !important;
@@ -1056,14 +1062,14 @@ body {
   }
 }
 
-/* Preguntas un poco más pequeñas y compactas */
+/* Preguntas compactas (base) */
 .qr-card--question .qr-q {
-  font-size: clamp(14px, 1.8vw, 17px) !important;
-  line-height: 1.2 !important;
+  font-size: clamp(16px, 2.1vw, 20px) !important;
+  line-height: 1.25 !important;
 }
 .qr-card--question .qr-opt {
-  font-size: clamp(11px, 1.6vw, 13px) !important;
-  padding: 8px 10px !important;
+  font-size: clamp(12px, 1.8vw, 14px) !important;
+  padding: 9px 12px !important;
 }
 
 /* TUS DATOS: tarjeta más compacta y desbloqueada */
@@ -1092,10 +1098,22 @@ body {
   font-size: clamp(12px, 1.5vw, 14px) !important;
   gap: 8px;
 }
-.qr-card--form .qr-consent input[type="checkbox"] {
+.qr-card--form .qr-consent-checkbox {
   width: 18px;
   height: 18px;
-  transform: translateY(1px);
+  margin-top: 2px;
+}
+
+/* Contenedor del botón SEND */
+.qr-start-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+.qr-card--form .qr-btn--img {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* SEND = mismo tamaño y brillo que RESTART */
@@ -1115,7 +1133,7 @@ body {
   .qr-card--form {
     margin: 0 auto;
     width: min(360px, 68vw) !important;
-    max-height: 78vh !important;
+    max-height: 72vh !important;
     padding: 8px 10px !important;
   }
 
@@ -1142,9 +1160,44 @@ body {
     gap: 6px;
   }
 
-  .qr-card--form .qr-consent input[type="checkbox"] {
+  .qr-card--form .qr-consent-checkbox {
     width: 16px;
     height: 16px;
-    transform: translateY(1px);
+    margin-top: 1px;
+  }
+
+  .qr-start-actions {
+    margin-top: 6px;
+  }
+
+  .qr-card--form .qr-btn--img__icon {
+    width: clamp(72px, 13vw, 104px) !important;
+  }
+}
+
+/* ====== OVERRIDE FUENTES MODAL PREGUNTAS (MANDAN ESTAS) ====== */
+
+/* Base (móvil + tablet) */
+.qr-card--question .qr-q,
+#qr-app.qr-app--fs .qr-card--question .qr-q {
+  font-size: clamp(14px, 1.6vw, 16px) !important;
+  line-height: 1.2 !important;
+}
+.qr-card--question .qr-opt {
+  font-size: clamp(11px, 1.4vw, 13px) !important;
+  line-height: 1.25 !important;
+  padding: 6px 8px !important;
+}
+
+/* Escritorio ≥ 1024px: preguntas más grandes */
+@media (min-width: 1024px) {
+  body #qr-app .qr-card--question .qr-q,
+  body #qr-app.qr-app--fs .qr-card--question .qr-q {
+    font-size: 22px !important;
+    line-height: 1.3 !important;
+  }
+  body #qr-app .qr-card--question .qr-opt {
+    font-size: 15px !important;
+    padding: 8px 10px !important;
   }
 }

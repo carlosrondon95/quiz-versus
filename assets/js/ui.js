@@ -151,16 +151,12 @@
     }
   }
 
-  // ===== Pantalla de inicio (NUEVO CONTENEDOR, SIN MODAL) =====
+  // ===== Pantalla de inicio (sin modal) =====
   function startModal(onPlay) {
-    // Si ya hay capa de inicio, no duplicar
     if (document.getElementById("qr-start-layer")) return;
-    // Si hubiese un modal abierto, tampoco
     if (document.querySelector("#qr-stage .qr-modal")) return;
 
     applyStartBg();
-
-    // Forzamos el estado "modal" del stage para que se vea bien en móvil (altura, etc.)
     markStageModalOpen(true);
 
     const layer = document.createElement("div");
@@ -359,7 +355,6 @@
     card.className = "qr-card qr-card--form";
     card.innerHTML = `
       <form id="qrLeadForm" novalidate>
-        <h3 class="qr-title">TUS DATOS</h3>
         <div class="qr-form-grid">
           <div class="qr-row">
             <label for="fName">Nombre</label>
@@ -378,9 +373,12 @@
           <div class="qr-error" id="errEmail"></div>
         </div>
         <div class="qr-row qr-consent">
-          <label>
-            <input id="fConsent" type="checkbox">
-            Acepto la <a id="policyLink" class="qr-link" href="https://versuselearning.com/politica-de-privacidad/" target="_blank" rel="noopener noreferrer">Política de Privacidad</a>
+          <label class="qr-consent-label">
+            <input id="fConsent" type="checkbox" class="qr-consent-checkbox">
+            <span>
+              Acepto la
+              <a id="policyLink" class="qr-link" href="https://versuselearning.com/politica-de-privacidad/" target="_blank" rel="noopener noreferrer">Política de Privacidad</a>
+            </span>
           </label>
           <div class="qr-error" id="errConsent"></div>
         </div>
@@ -540,9 +538,7 @@
     });
   }
 
-  // ================== CEREMONIA DE ASIGNACIÓN NUEVA ==================
-
-  // Normalización básica
+  // ================== CEREMONIA DE ASIGNACIÓN ==================
   function normalize(s) {
     return String(s || "")
       .toUpperCase()
@@ -551,7 +547,6 @@
       .trim();
   }
 
-  // Mapeo: identificador -> logo + texto de rol
   const ACADEMY_META = {
     AGEADMIN: {
       id: "AGEADMIN",
@@ -603,34 +598,28 @@
     },
   };
 
-  // Detecta meta a partir del texto “decorado” que manda game.js (p.ej. "JURISPOL – Escala Ejecutiva", "AGE360 – Auxiliar")
   function metaFromDecorated(label) {
     const t = normalize(label);
 
-    // AGE360 → distinguir rama
     if (t.includes("AGE360")) {
       if (t.includes("AUXILIAR")) return ACADEMY_META.AGEAUX;
-      return ACADEMY_META.AGEADMIN; // por defecto Administrativo si no indica Auxiliar
+      return ACADEMY_META.AGEADMIN;
     }
 
-    // JURISPOL → distinguir escala
     if (t.includes("JURISPOL")) {
       if (t.includes("EJECUTIVA")) return ACADEMY_META.JURISPOLEE;
-      return ACADEMY_META.JURISPOLEB; // por defecto Básica si no indica Ejecutiva
+      return ACADEMY_META.JURISPOLEB;
     }
 
-    // Resto directos
     if (t.includes("PREFORTIA")) return ACADEMY_META.PREFORTIA;
     if (t.includes("FORVIDE")) return ACADEMY_META.FORVIDE;
     if (t.includes("METODOS") || t.includes("MÉTODOS"))
       return ACADEMY_META.METODOS;
     if (t.includes("DOZENTY")) return ACADEMY_META.DOZENTY;
 
-    // Fallback genérico (sin logo/rol)
     return { id: t, label: label || "Academia", logo: null, role: "" };
   }
 
-  // Extrae ganadores de distintos formatos
   function extractWinners(result) {
     if (!result) return [];
     if (Array.isArray(result)) return result.slice(0, 2);
@@ -651,7 +640,6 @@
     return [];
   }
 
-  // Esperar a que carguen imágenes del card y refitear
   function refitOnImages(card) {
     if (!card) return;
     const imgs = Array.from(card.querySelectorAll("img"));
@@ -676,7 +664,6 @@
     setTimeout(() => fitCardToStage(card, 0.85), 120);
   }
 
-  // Ceremonia
   function endingModal(result, onRestart) {
     if (!root) return;
 
@@ -733,7 +720,7 @@
             : ""
         }
       </div>
-    `;
+   `;
 
     markStageModalOpen(true);
     root.innerHTML = "";
@@ -793,7 +780,6 @@
 
     return modal;
   }
-  // ================== FIN CEREMONIA ==================
 
   window.QRUI = {
     startModal,
@@ -815,12 +801,10 @@
   }
 
   const controls = {
-    /** Ajuste rápido en móvil vertical (portrait) */
     setStartPosPortrait({ left, bottom } = {}) {
       setVar("--start-left-portrait", left);
       setVar("--start-bottom-portrait", bottom);
     },
-    /** Ajuste rápido en móvil horizontal (landscape) */
     setStartPosLandscape({ left, bottom } = {}) {
       setVar("--start-left-landscape", left);
       setVar("--start-bottom-landscape", bottom);
