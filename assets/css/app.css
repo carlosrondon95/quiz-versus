@@ -1203,48 +1203,110 @@ body {
 }
 
 /* ===========================================
-   CONSENTIMIENTO: CHECKBOX CENTRADO Y DECENTE
+   CONSENTIMIENTO: CHECKBOX CENTRADO SENCILLO
+   (quitamos el nativo azul y dibujamos 1 sólo check
+   blanco/negro minimal, compatible con Elementor)
    =========================================== */
 
 .qr-card--form .qr-consent {
   display: flex !important;
-  justify-content: center !important; /* centro en el modal */
+  justify-content: center !important;
   align-items: center !important;
   text-align: center !important;
   gap: 8px !important;
   max-width: 420px;
   width: 100%;
-  margin: 4px auto 2px !important; /* se mantiene cerca del SEND */
+  margin: 4px auto 2px !important; /* no tocamos el espacio con SEND */
 }
 
-/* Wrapper interno típico de Elementor + tu wrapper propio */
+/* Estructura típica de Elementor */
 .qr-card--form .qr-consent .elementor-field-subgroup,
-.qr-card--form .qr-consent .elementor-field-option,
-.qr-card--form .qr-consent-label {
+.qr-card--form .qr-consent .elementor-field-option {
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: auto !important;
+  gap: 8px !important;
+}
+
+/* 1) OCULTAR el checkbox nativo (adiós azul) */
+.qr-card--form .qr-consent .elementor-field-option input[type="checkbox"] {
+  position: absolute !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+}
+
+/* 2) NEUTRALIZAR lo que dibuja Elementor por defecto */
+.qr-card--form .qr-consent .elementor-field-option label,
+.qr-card--form .qr-consent .elementor-field-option label::before,
+.qr-card--form .qr-consent .elementor-field-option label::after {
+  background: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+/* 3) DIBUJAR nuestro cuadrado blanco/negro minimal */
+.qr-card--form .qr-consent .elementor-field-option label {
+  position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
-  width: auto !important; /* que no se estire a todo el ancho */
-}
-
-/* Checkbox sencillo blanco/negro, sin estilos raros */
-.qr-card--form .qr-consent input[type="checkbox"],
-.qr-card--form .qr-consent-checkbox {
-  all: unset; /* quita mierdecillas de Elementor / estilos anteriores */
-  appearance: auto; /* nativo del navegador */
-  -webkit-appearance: checkbox; /* nativo en WebKit */
-  width: 16px;
-  height: 16px;
+  gap: 8px !important;
   cursor: pointer;
-  margin: 0 6px 0 0; /* un poco de aire con el texto */
-  box-sizing: border-box;
 }
 
-/* Texto del consentimiento */
-.qr-card--form .qr-consent label,
+/* cuadrado */
+.qr-card--form
+  .qr-consent
+  .elementor-field-option
+  input[type="checkbox"]
+  + label::before {
+  content: "" !important;
+  display: inline-block !important;
+  width: 18px !important;
+  height: 18px !important;
+  border: 2px solid #000 !important;
+  background: #fff !important;
+  border-radius: 3px !important;
+  box-sizing: border-box !important;
+  vertical-align: -2px;
+}
+
+/* tick negro cuando está marcado */
+.qr-card--form
+  .qr-consent
+  .elementor-field-option
+  input[type="checkbox"]:checked
+  + label::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 10px !important;
+  height: 6px !important;
+  left: 4px !important; /* centra el tick dentro del cuadrado */
+  top: 5px !important;
+  border-left: 3px solid #000 !important;
+  border-bottom: 3px solid #000 !important;
+  transform: rotate(-45deg);
+  transform-origin: center;
+}
+
+/* foco accesible (cuando se navega con teclado) */
+.qr-card--form
+  .qr-consent
+  .elementor-field-option
+  input[type="checkbox"]:focus-visible
+  + label::before {
+  outline: 2px dashed #000 !important;
+  outline-offset: 2px !important;
+}
+
+/* Texto del consentimiento (centrado y sin márgenes raros) */
+.qr-card--form .qr-consent .elementor-field-option label,
 .qr-card--form .qr-consent .elementor-field-option span {
   margin: 0 !important;
   font-size: clamp(12px, 1.5vw, 14px) !important;
-  line-height: 1.3;
+  line-height: 1.3 !important;
 }
