@@ -601,12 +601,14 @@ body {
   border: 8px solid #000 !important;
   border-radius: 8px !important;
 }
+
 .qr-ceremony-title,
 .qr-ceremony-role,
 .qr-ceremony-academy {
   font-family: "Press Start 2P", monospace;
   text-transform: uppercase;
 }
+
 .qr-ceremony-title {
   color: #83bb26;
   -webkit-text-stroke: 1px #e71d73;
@@ -615,6 +617,7 @@ body {
   font-size: 35px;
   margin: 0 0 12px;
 }
+
 .qr-ceremony-role {
   color: #83bb26;
   -webkit-text-stroke: 1px #e71d73;
@@ -623,6 +626,7 @@ body {
   font-size: 28px;
   margin: 4px 0;
 }
+
 .qr-ceremony-academy {
   color: #111;
   -webkit-text-stroke: 0;
@@ -630,6 +634,7 @@ body {
   font-size: 25px;
   margin-top: 2px;
 }
+
 .qr-ceremony-main {
   display: flex;
   align-items: center;
@@ -637,29 +642,44 @@ body {
   gap: 16px;
   margin: 4px 0 8px;
 }
-.qr-ceremony-main--single .qr-ceremony-logo {
-  max-width: 180px;
-}
-.qr-ceremony-main--double .qr-ceremony-logo {
-  max-width: 140px;
-}
+
+/* cajas de logo y copa como background-image */
 .qr-ceremony-logo,
 .qr-ceremony-cup {
-  max-height: 120px;
-  width: auto;
+  display: inline-block;
+  width: 120px;
+  height: 120px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
+
+.qr-ceremony-main--single .qr-ceremony-logo {
+  width: 180px;
+  height: 120px;
+}
+
+.qr-ceremony-main--double .qr-ceremony-logo {
+  width: 140px;
+  height: 110px;
+}
+
 .qr-ceremony-logo {
   image-rendering: auto;
 }
+
 .qr-ceremony-cup {
   image-rendering: pixelated;
+  background-image: url("../img/copa.png");
 }
+
 .qr-ceremony-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   min-width: 140px;
 }
+
 .qr-ceremony-roles {
   display: flex;
   flex-direction: column;
@@ -667,22 +687,33 @@ body {
   gap: 4px;
   margin-top: 6px;
 }
+
 .qr-ceremony-actions {
   margin-top: 10px;
   display: flex;
   justify-content: center;
 }
+
+/* Botón de reinicio con icono por background */
 .qr-ceremony-restart {
   all: unset;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.qr-ceremony-restart img {
+
+.qr-ceremony-restart-icon {
   display: block;
   width: min(380px, 100%);
-  height: auto;
+  max-width: clamp(120px, 24vw, 180px);
+  aspect-ratio: 3 / 1;
+  margin: 0 auto;
+  background-image: url("../img/buttons/restart.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   animation: qr-colorPulse 1.25s ease-in-out infinite alternate;
 }
+
 /* Ceremonia horizontal móvil */
 @media (max-width: 1024px) and (orientation: landscape) {
   .qr-card--ceremony {
@@ -704,16 +735,48 @@ body {
   .qr-ceremony-main {
     gap: 10px;
   }
+
   .qr-ceremony-logo,
   .qr-ceremony-cup {
-    max-height: 90px;
+    width: 90px;
+    height: 90px;
   }
 
-  .qr-ceremony-restart img {
+  .qr-ceremony-restart-icon {
     width: clamp(76px, 13vw, 110px) !important;
-    height: auto !important;
   }
 }
+
+/* Slugs por academia → logo concreto (coinciden con los id/slug del JS) */
+.qr-ceremony-logo--ageadmin {
+  background-image: url("../img/logos/ageadmin.png");
+}
+.qr-ceremony-logo--ageaux {
+  background-image: url("../img/logos/ageaux.png");
+}
+.qr-ceremony-logo--dozenty {
+  background-image: url("../img/logos/dozenty.png");
+}
+.qr-ceremony-logo--forvide {
+  background-image: url("../img/logos/forvide.png");
+}
+.qr-ceremony-logo--prefortia {
+  background-image: url("../img/logos/prefortia.png");
+}
+.qr-ceremony-logo--metodos {
+  background-image: url("../img/logos/metodos.png");
+}
+.qr-ceremony-logo--jurispoleb {
+  background-image: url("../img/logos/jurispoleb.png");
+}
+.qr-ceremony-logo--jurispolee {
+  background-image: url("../img/logos/jurispolee.png");
+}
+/* Si añades más:
+.qr-ceremony-logo--loquesea {
+  background-image: url("../img/logos/loquesea.png");
+}
+*/
 
 /* =================== HONEYPOT =================== */
 .qr-hp {
