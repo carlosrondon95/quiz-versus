@@ -1228,18 +1228,17 @@ body {
   width: auto !important; /* que no se estire a todo el ancho */
 }
 
-/* Checkbox con un mínimo de dignidad visual */
+/* Checkbox sencillo blanco/negro, sin estilos raros */
 .qr-card--form .qr-consent input[type="checkbox"],
 .qr-card--form .qr-consent-checkbox {
-  width: 18px !important;
-  height: 18px !important;
-  margin: 0 !important;
-  margin-top: 1px !important;
-  flex-shrink: 0;
-  appearance: auto !important;
-  -webkit-appearance: checkbox !important;
-  accent-color: #e71d73; /* color de marca */
+  all: unset; /* quita mierdecillas de Elementor / estilos anteriores */
+  appearance: auto; /* nativo del navegador */
+  -webkit-appearance: checkbox; /* nativo en WebKit */
+  width: 16px;
+  height: 16px;
   cursor: pointer;
+  margin: 0 6px 0 0; /* un poco de aire con el texto */
+  box-sizing: border-box;
 }
 
 /* Texto del consentimiento */
