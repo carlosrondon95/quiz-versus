@@ -1,4 +1,21 @@
 (function () {
+  function isIOS() {
+    return (
+      /iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+    );
+  }
+
+  function isStandalone() {
+    // PWA / añadido a pantalla de inicio
+    return (
+      (window.matchMedia &&
+        (window.matchMedia("(display-mode: fullscreen)").matches ||
+          window.matchMedia("(display-mode: standalone)").matches)) ||
+      window.navigator.standalone === true
+    );
+  }
+
   class QRFS {
     constructor(rootEl, stageEl, padEl) {
       this.root = rootEl;
@@ -7,10 +24,17 @@
       this.isFS = false;
       this.btn = document.getElementById("qr-exit");
       this.rotate = document.getElementById("qr-rotate");
+      this._isIOS = isIOS();
+      this._isStandalone = isStandalone();
 
       if (this.btn) this.btn.addEventListener("click", () => this.exit());
 
+      // Cambios de fullscreen estándar + webkit
       document.addEventListener("fullscreenchange", () => this._onChange());
+      document.addEventListener("webkitfullscreenchange", () =>
+        this._onChange()
+      );
+
       window.addEventListener("orientationchange", () =>
         this._applyModeClasses()
       );
@@ -18,25 +42,32 @@
     }
 
     async enter() {
+      const root = this.root;
+      if (!root) return;
+
+      // 1) Intento máximo de fullscreen real
       try {
-        if (this.root.requestFullscreen) {
-          await this.root.requestFullscreen({ navigationUI: "hide" });
+        if (root.requestFullscreen) {
+          // Navegadores modernos (Android / algunos iOS recientes)
+          await root.requestFullscreen({ navigationUI: "hide" });
+        } else if (root.webkitRequestFullscreen) {
+          // WebKit fallback
+          root.webkitRequestFullscreen();
         }
       } catch (e) {
-        /* iOS u otros: seguimos con fallback */
+        // Silencio, seguimos con pseudo-FS
       }
 
-      // Intento bloquear a horizontal (Chrome Android y compatibles)
+      // 2) Intento de bloquear landscape (donde esté soportado)
       await this._tryLockLandscape();
 
-      // Fallback / modo unificado
+      // 3) Modo "FS" visual unificado (Android + iOS)
       this.root.classList.add("qr-app--fs");
       document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
 
       if (this.stage) this.stage.classList.add("qr-stage--mobile");
 
-      // Mostrar controles (la visibilidad final depende de orientación por CSS)
       if (this.pad) {
         this.pad.hidden = false;
         this.pad.setAttribute("aria-hidden", "false");
@@ -45,19 +76,44 @@
       if (this.btn) this.btn.hidden = false;
 
       this.isFS = true;
+
+      // Ajustamos clases de orientación + tamaño viewport
       this._applyModeClasses();
+      this._resizeRootToViewport();
+
       window.dispatchEvent(
         new CustomEvent("qr:fs:change", { detail: { isFS: true } })
       );
-      setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
+
+      // Reforzar después de pequeños reflows en móviles
+      setTimeout(() => {
+        this._resizeRootToViewport();
+        window.dispatchEvent(new Event("resize"));
+      }, 80);
     }
 
     async exit() {
+      // 1) Salida de fullscreen real si lo hay
       try {
-        if (document.fullscreenElement) await document.exitFullscreen();
-      } catch (e) {}
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (
+          document.webkitFullscreenElement &&
+          document.webkitExitFullscreen
+        ) {
+          document.webkitExitFullscreen();
+        }
+      } catch (e) {
+        // ignoramos
+      }
 
-      this.root.classList.remove("qr-app--fs", "is-portrait");
+      // 2) Limpiamos modo "FS" visual
+      if (this.root) {
+        this.root.classList.remove("qr-app--fs", "is-portrait");
+        this.root.style.width = "";
+        this.root.style.height = "";
+      }
+
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
 
@@ -73,16 +129,24 @@
       if (this.rotate) this.rotate.hidden = true;
 
       this.isFS = false;
+
       this._applyModeClasses();
+
       window.dispatchEvent(
         new CustomEvent("qr:fs:change", { detail: { isFS: false } })
       );
-      setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
+
+      setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 50);
     }
 
     _onChange() {
-      const fs = !!document.fullscreenElement;
-      if (!fs && this.isFS) {
+      const fsActive =
+        !!document.fullscreenElement || !!document.webkitFullscreenElement;
+
+      // Si el navegador ha salido de FS pero nosotros creemos que seguimos, reseteamos
+      if (!fsActive && this.isFS) {
         this.exit();
       }
     }
@@ -107,19 +171,47 @@
         this.root.classList.toggle("is-portrait", portrait);
       }
 
-      // Overlay "gira"
+      // Overlay "gira": solo tiene sentido en FS
       if (this.rotate) {
-        this.rotate.hidden = !portrait;
+        const shouldShowRotate =
+          this.root && this.root.classList.contains("qr-app--fs") && portrait;
+        this.rotate.hidden = !shouldShowRotate;
       }
+
+      // En FS ajustamos siempre al viewport real (truco iOS)
+      if (this.isFS) {
+        this._resizeRootToViewport();
+      }
+    }
+
+    _resizeRootToViewport() {
+      if (!this.root) return;
+
+      // En iOS Safari la barra de direcciones baila,
+      // así que usamos innerWidth/innerHeight, que es lo más "real" que vamos a tener.
+      const w = window.innerWidth || document.documentElement.clientWidth;
+      const h = window.innerHeight || document.documentElement.clientHeight;
+
+      this.root.style.width = w + "px";
+      this.root.style.height = h + "px";
     }
 
     async _tryLockLandscape() {
       try {
         if (screen.orientation && screen.orientation.lock) {
           await screen.orientation.lock("landscape");
+          return;
+        }
+        const anyScreen = screen;
+        const legacyLock =
+          anyScreen.lockOrientation ||
+          anyScreen.mozLockOrientation ||
+          anyScreen.msLockOrientation;
+        if (legacyLock) {
+          legacyLock.call(anyScreen, "landscape");
         }
       } catch (e) {
-        // iOS Safari y otros: no soporta lock; el overlay avisará en portrait
+        // iOS y otros no soportan lock; no pasa nada, el overlay "gira" se encargará
       }
     }
   }
