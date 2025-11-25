@@ -41,6 +41,7 @@
     if (m) m.remove();
     const any = document.querySelector("#qr-stage .qr-modal");
     markStageModalOpen(!!any);
+    if (stageEl) stageEl.classList.remove("qr-stage--select");
     emit("qr:modal:close");
   }
 
@@ -173,6 +174,8 @@
 
     const modal = document.createElement("div");
     modal.className = "qr-modal qr-modal--select";
+    // margen interno para que no pegue a los bordes del stage
+    modal.style.padding = "min(16px, 2.5vh)";
 
     const card = document.createElement("div");
     card.className = "qr-card qr-card--select";
@@ -188,17 +191,64 @@
       </div>
     `;
 
+    // Garantías contra reglas antiguas en cascada (límites relativos al stage)
+    card.style.background = "transparent";
+    card.style.border = "0";
+    card.style.outline = "none";
+    card.style.boxShadow = "none";
+    card.style.width = "auto";
+    card.style.height = "auto";
+    card.style.maxWidth = "90%";
+    card.style.maxHeight = "80%";
+
     modal.appendChild(card);
     (document.querySelector("#qr-stage #qr-modal-root") || root).appendChild(
       modal
     );
     markStageModalOpen(true);
+    if (stageEl) stageEl.classList.add("qr-stage--select");
     emit("qr:modal:open");
 
     if (window.QRAudio) window.QRAudio.playDoor();
 
-    const refit = () => requestAnimationFrame(() => fitCardToStage(card, 0.8));
-    refit();
+    // Escala dinámica: en móvil horizontal permitimos hasta 0.5
+    const refit = () =>
+      requestAnimationFrame(() => {
+        const smallLandscape = window.matchMedia(
+          "(max-width: 1024px) and (orientation: landscape)"
+        ).matches;
+        // Ajuste del "cuadrado" a 4/5 en horizontal para ganar altura visual
+        const wraps = card.querySelectorAll(".qr-select__imgwrap");
+        wraps.forEach((w) => {
+          w.style.aspectRatio = smallLandscape ? "4 / 5" : "1 / 1";
+        });
+        const imgs = card.querySelectorAll(".qr-select__img");
+        imgs.forEach((img) => {
+          img.style.maxWidth = smallLandscape ? "92%" : "96%";
+          img.style.maxHeight = smallLandscape ? "92%" : "96%";
+        });
+        const minScale = smallLandscape ? 0.5 : 0.8;
+        fitCardToStage(card, minScale);
+      });
+
+    // Espera a que carguen imágenes y ajusta
+    const allImgs = card.querySelectorAll("img");
+    let pending = allImgs.length;
+    const done = () => {
+      pending--;
+      if (pending <= 0) refit();
+    };
+    if (pending === 0) refit();
+    else {
+      allImgs.forEach((i) => {
+        if (i.complete && i.naturalWidth) done();
+        else {
+          i.addEventListener("load", done, { once: true });
+          i.addEventListener("error", done, { once: true });
+        }
+      });
+    }
+
     window.addEventListener("resize", refit);
     window.addEventListener("orientationchange", refit);
     window.addEventListener("qr:viewport:change", refit);
@@ -224,6 +274,7 @@
       .querySelector("#selFemale")
       .addEventListener("click", () => pick("mujer"));
 
+    // Accesibilidad con teclado
     const items = card.querySelectorAll(".qr-select__item");
     let idx = 0;
     if (items[0]) items[0].focus();

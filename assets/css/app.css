@@ -434,8 +434,8 @@ body {
   font-weight: 700; /* NEGRITA */
 }
 
-/* Móvil: política en línea aparte */
-@media (max-width: 768px) {
+/* Móvil portrait: política en línea aparte (EN HORIZONTAL NO para ahorrar altura) */
+@media (max-width: 768px) and (orientation: portrait) {
   .qr-card--form .qr-consent-label a {
     display: block;
     margin-top: 2px;
@@ -529,28 +529,50 @@ body {
 }
 
 /* =================== SELECTOR DE PERSONAJE =================== */
+.qr-modal--select {
+  /* margen interior para que NUNCA pegue al borde del stage */
+  padding: clamp(8px, 2vh, 14px);
+  box-sizing: border-box;
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+/* Card base (desktop OK) */
 .qr-card--select {
-  width: 560px;
-  height: 360px;
-  max-width: 90vw;
-  max-height: 90vh;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  align-items: stretch;
   justify-content: center;
+  align-items: stretch;
+  gap: 8px;
   padding: 12px 14px;
   background: transparent !important;
   border: 0 !important;
   outline: none !important;
   box-shadow: none !important;
+
+  /* límites suaves respecto al CONTENEDOR (el overlay ocupa todo el stage) */
+  width: auto;
+  height: auto;
+  max-width: 92%;
+  max-height: 86%;
 }
+
+.qr-card--select .qr-title {
+  font-family: "Press Start 2P", monospace;
+  text-align: center;
+  margin: 0 0 6px;
+}
+
+/* Grid de opciones */
 .qr-select {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
+  /* evita que fuerzas de altura raras rompan el layout */
+  align-items: stretch;
 }
+
 .qr-select__item {
   border: 4px solid var(--gray-dark);
   background: #fff;
@@ -559,21 +581,22 @@ body {
   box-shadow: 0 0 0 6px var(--gray-dark), 0 8px 0 var(--black);
   cursor: pointer;
   padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
 }
+
 .qr-select__item:hover,
 .qr-select__item:focus {
   border-color: var(--brand-dark);
   background: #fdf8f1;
 }
+
+/* Mantén forma “cuadrado” del lienzo de sprite; que el grid haga el resto */
 .qr-select__imgwrap {
   width: 100%;
   aspect-ratio: 1 / 1;
   display: grid;
   place-items: center;
-  padding: 2px;
 }
 .qr-select__img {
   image-rendering: pixelated;
@@ -583,47 +606,61 @@ body {
   height: auto;
 }
 
+/* ===== Ajustes móviles ===== */
+
+/* Vertical: compacto, pero sin recortes */
 @media (max-width: 768px) and (orientation: portrait) {
   .qr-card--select {
-    width: 90vw;
-    height: 420px;
-    padding: 10px 12px;
+    max-width: 94%;
+    max-height: 86%;
+    gap: 6px;
+    padding: 10px;
+  }
+  .qr-card--select .qr-title {
+    font-size: clamp(14px, 3.6vw, 18px);
+    margin-bottom: 4px;
   }
   .qr-select {
-    gap: 8px;
-  }
-  .qr-select__item {
-    padding: 4px;
-    outline-width: 4px;
-  }
-  .qr-select__imgwrap {
-    padding: 2px;
-  }
-  .qr-select__img {
-    max-width: 97%;
-    max-height: 97%;
+    gap: 6px;
   }
 }
-@media (max-width: 768px) and (orientation: landscape) {
+
+/* HORIZONTAL (EL PROBLEMA): más pequeño, prioriza ALTURA del stage */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .qr-modal--select {
+    padding: clamp(8px, 2.4vh, 16px);
+  }
+
   .qr-card--select {
-    width: 96vw;
-    height: 300px;
-    padding: 10px 12px;
+    /* Límites estrictos dentro del stage con aire arriba/abajo */
+    max-width: 90%;
+    max-height: 80%;
+    gap: 4px;
+    padding: 8px;
   }
+
+  .qr-card--select .qr-title {
+    font-size: clamp(12px, 2.2vw, 16px);
+    margin-bottom: 4px;
+  }
+
   .qr-select {
-    gap: 8px;
+    gap: 4px;
   }
-  .qr-select__item {
-    padding: 3px;
-    outline-width: 4px;
-  }
+
+  /* Hacemos el “cuadrado” ligeramente vertical para ganar altura total */
   .qr-select__imgwrap {
-    padding: 2px;
+    aspect-ratio: 4 / 5;
   }
   .qr-select__img {
-    max-width: 98%;
-    max-height: 98%;
+    max-width: 92%;
+    max-height: 92%;
   }
+}
+
+.qr-select__img {
+  max-width: 92%;
+  max-height: 92%;
 }
 
 /* ► Fondo selección en landscape */
@@ -1223,35 +1260,60 @@ body {
     width: min(360px, 68vw) !important;
     max-height: 72vh !important;
     padding: 8px 10px !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important; /* nada se sale del modal */
   }
+
+  /* El formulario rellena la tarjeta y permite empujar SEND al fondo */
+  .qr-card--form #qrLeadForm {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
   .qr-card--form .qr-title {
     font-size: clamp(12px, 1.6vw, 14px) !important;
     margin-bottom: 6px;
   }
+
   .qr-card--form label {
     font-size: clamp(11px, 1.4vw, 13px) !important;
+    margin-bottom: 1px;
   }
+
   .qr-card--form .qr-row {
-    margin: 2px 0;
+    margin: 1px 0;
   }
+
   .qr-card--form .qr-input {
     padding: 6px 8px;
     font-size: clamp(11px, 1.4vw, 13px) !important;
   }
+
   .qr-card--form .qr-consent {
     font-size: clamp(11px, 1.4vw, 13px) !important;
     gap: 6px;
   }
+
   .qr-card--form .qr-consent-checkbox {
     width: 16px;
     height: 16px;
     margin-top: 1px;
   }
 
-  /* SEND pegado abajo con 4px */
+  /* Errores más pequeños y pegados al campo en horizontal */
+  .qr-error {
+    font-size: 10px;
+    margin-top: 1px;
+    min-height: 1.1em;
+  }
+
+  /* SEND pegado abajo con margen fijo interior */
   .qr-start-actions {
     margin-top: auto;
     margin-bottom: 4px;
+    justify-content: center;
   }
 
   .qr-card--form .qr-btn--img__icon {
@@ -1297,12 +1359,4 @@ body {
   color: #0066cc !important;
   text-decoration: underline;
   font-weight: 700 !important;
-}
-
-/* SOLO MÓVIL (portrait + landscape): enlace en línea aparte */
-@media (max-width: 768px) {
-  .qr-card--form .qr-row.qr-consent .qr-consent-label a {
-    display: block;
-    margin-top: 2px;
-  }
 }
