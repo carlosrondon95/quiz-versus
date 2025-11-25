@@ -1,70 +1,74 @@
-# MISIÓN FUTURO
+# 🚀 MISIÓN FUTURO
 
-**MISIÓN FUTURO** es un mini-videojuego web integrado en WordPress. Convierte un cuestionario tradicional en una experiencia interactiva donde el usuario avanza por un pequeño *runner* en 2D, esquiva obstáculos y responde preguntas a medida que progresa por el escenario.
+**MISIÓN FUTURO** is a mini web videogame integrated into WordPress.  
+It transforms a traditional questionnaire into an interactive experience where the user progresses through a small 2D runner, dodges obstacles, and answers questions along the way.
 
-El objetivo es hacer más atractivo y dinámico el proceso de recopilación de información, ofreciendo una experiencia fluida y con estética retro.
-
----
-
-## 🎮 Cómo funciona
-
-- El jugador avanza por un escenario de estilo retro.
-- Cada puerta del recorrido corresponde a una pregunta del cuestionario.
-- El usuario elige sus respuestas mientras esquiva obstáculos.
-- Al final aparece un formulario para introducir nombre, email y teléfono.
-- El juego calcula las academias recomendadas según las respuestas.
-- Al terminar, se muestra una pequeña ceremonia final con el resultado.
-
-Todo ocurre en una sola pantalla, sin recargas y con controles tanto para escritorio como para dispositivos móviles.
+The goal is to make data collection more engaging and dynamic, delivering a smooth, retro-styled experience.
 
 ---
 
-## 📊 Registro de datos
+## 🎮 How It Works
 
-Cuando el usuario completa MISIÓN FUTURO y envía el formulario final, el sistema guarda automáticamente toda la información en un archivo **CSV**:
+- The player moves through a retro-style environment.  
+- Each door in the path corresponds to a questionnaire question.  
+- The user selects answers while dodging obstacles.  
+- At the end, a form appears requesting name, email, and phone.  
+- The game calculates the recommended academies based on the answers.  
+- A final small “assignment ceremony” displays the results.  
 
-
-### Contenido de cada registro:
-
-- **Nombre**  
-- **Teléfono**  
-- **Email**  
-- **Academia 1** (resultado principal)  
-- **Academia 2** (si existe)  
-- **Fecha del envío**
-
-El archivo se va actualizando con cada nueva partida completada.
+Everything happens on a single screen, with no reloads, and with support for both desktop and mobile controls.
 
 ---
 
-## ⚙️ Integración en WordPress
+## 📊 Data Logging
 
-MISIÓN FUTURO funciona como un plugin propio:
+When the user completes **MISIÓN FUTURO** and submits the final form, the system automatically saves all information into a CSV file.
 
-1. La carpeta del plugin se comprime en un `.zip`.
-2. Se instala desde **Plugins → Añadir nuevo → Subir plugin**.
-3. Se activa.
-4. Se inserta en la página deseada mediante shortcode.
+**Each entry includes:**
+- Name  
+- Phone  
+- Email  
+- Academy 1 (main result)  
+- Academy 2 (if applicable)  
+- Submission date  
 
-No requiere configuraciones adicionales.
+The file updates automatically with each completed run.
 
 ---
 
-## 🛠️ Tecnologías utilizadas
+## ⚙️ WordPress Integration
+
+**MISIÓN FUTURO** works as a standalone WordPress plugin:
+
+1. The plugin folder is compressed into a `.zip`.  
+2. Install it via *Plugins → Add New → Upload Plugin*.  
+3. Activate it.  
+4. Insert it on any page via shortcode.  
+
+No additional configuration required.
+
+---
+
+## 🛠️ Technologies Used
 
 - **JavaScript (Canvas 2D)**  
-  Motor de juego ligero, animaciones, físicas simples y control del personaje.
+  Lightweight game engine, animations, simple physics, and character control.
+
 - **PHP**  
-  Gestión del formulario final y escritura de datos en el CSV.
+  Handles the final form submission and writes data to the CSV.
+
 - **AJAX**  
-  Comunicación entre el juego y WordPress sin recargar la página.
-- **CSS responsive**  
-  Ajustes visuales para escritorio, móvil y orientación horizontal.
+  Enables communication between the game and WordPress without page reloads.
+
+- **Responsive CSS**  
+  Layout adjustments for desktop, mobile, and horizontal orientation.
+
 - **WordPress**  
-  Como entorno de integración y punto central de almacenamiento.
+  Integration environment and data storage point.
 
 ---
 
-## 🎯 Propósito del proyecto
+## 🎯 Project Purpose
 
-MISIÓN FUTURO fue creado para mejorar la experiencia del usuario y hacer más ameno un proceso que normalmente resulta monótono. La mezcla de juego, narrativa ligera y recomendación final ofrece una interacción más memorable, manteniendo al mismo tiempo un flujo claro y directo de recogida de datos.
+**MISIÓN FUTURO** was created to improve user experience and make a typically monotonous process more enjoyable.  
+The mix of retro-style gameplay, light narrative, and personalized recommendations provides a memorable interaction while maintaining a clean and efficient data collection flow.
