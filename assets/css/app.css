@@ -1321,3 +1321,26 @@ body {
     margin-top: 2px;
   }
 }
+
+/* Consent: flujo natural, sin forzar nada */
+.qr-card--form .qr-consent-label {
+  white-space: normal; /* permite saltos de línea */
+  line-height: 1.25;
+  word-break: normal;
+  overflow-wrap: anywhere; /* rompe si hace falta en pantallas estrechas */
+}
+
+/* Enlace: inline por defecto; si no cabe, el texto SALTA de línea */
+.qr-card--form .qr-consent-label a {
+  display: inline; /* valor normal, sin !important */
+  margin-top: 0;
+  text-decoration: underline;
+}
+
+/* Anula el antiguo display:block del media-query móvil si existía */
+@media (max-width: 768px) {
+  .qr-card--form .qr-row.qr-consent .qr-consent-label a {
+    display: inline;
+    margin-top: 0;
+  }
+}

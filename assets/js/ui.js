@@ -798,3 +798,5 @@
   window.QRUI = window.QRUI || {};
   window.QRUI.controls = Object.assign(window.QRUI.controls || {}, controls);
 })();
+
+
